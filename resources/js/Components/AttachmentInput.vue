@@ -125,9 +125,11 @@ const clearFiles = () => {
 const props = withDefaults(
   defineProps<{
     isRequired?: boolean
+    errors?: Record<string, string[]>
   }>(),
   {
-    isRequired: false
+    isRequired: false,
+    errors: () => ({})
   }
 )
 
@@ -147,6 +149,7 @@ defineExpose({ clearFiles, getFiles })
       <div
         ref="dropZoneRef"
         class="ex-container bg-accent flex min-h-[200px] items-center justify-center gap-3 p-6"
+        :class="{ 'border-red-500': props.errors.file }"
         @dragover.prevent
         @drop.prevent
       >
@@ -196,6 +199,7 @@ defineExpose({ clearFiles, getFiles })
         <p class="text-xs">Total Size: {{ formatFileSize(totalFileSize) }}</p>
       </div>
       <p v-if="errorMessage" class="mt-2 text-sm text-red-500">{{ errorMessage }}</p>
+      <p v-if="props.errors.file" class="mt-2 text-sm text-red-500">{{ props.errors.file[0] }}</p>
     </div>
   </Container>
 </template>

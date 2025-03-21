@@ -26,7 +26,7 @@ onMounted(() => {
     <div
       class="bg-support relative flex min-h-screen flex-col items-center gap-4 overflow-hidden p-4"
     >
-      <ToastDialog />
+      <!-- <ToastDialog /> -->
       <Card
         class="text-card-foreground rounded-lg border bg-background flex w-full items-center justify-between border-none px-6 py-4 shadow-none md:mb-0"
       >

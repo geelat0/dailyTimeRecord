@@ -74,6 +74,10 @@ class TimeEntryController extends Controller
             $timeEntry->shift_schedule_id = $shiftSchedule->id;
             $timeEntry->save();
         }
+
+        $controller = new TimeSheetController();
+        $controller->computeTimes($timeEntry);
+        
         return response()->json(
             $timeEntry,
             200

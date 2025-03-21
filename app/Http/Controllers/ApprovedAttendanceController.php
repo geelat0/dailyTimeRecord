@@ -28,61 +28,77 @@ class ApprovedAttendanceController extends Controller
      * Store a newly created attendance in storage.
      */
     public function store(ApprovedAttendanceRequest $request)
-    {   
+    { 
         
-        $validated = new ApproveAttendance($request->validated());
-
-        $startDates = $request->start_date;
-        $endDates = $request->end_date; 
-        $files = $request->file('file');
-        // Store the file on S3 and get the file path
-   
-
-
-        $attendances = [];
-
-        foreach ($startDates as $index => $startDate) {
-           
-
-            $fileDetails = [];
-            foreach ($files as $fileIndex => $file) {
-                $path = $file->store('uploads', 's3');
-                $fileName = basename($path);
-                $fileDetails[] = [
-                    'file_name' => $file->getClientOriginalName(),
-                    'file' => str_replace('.pdf', '', $fileName) . Str::random(10)
-
-                ];
+        try{
+            $validated = new ApproveAttendance($request->validated());
+            $startDates = $request->start_date;
+            $endDates = $request->end_date; 
+            $files = $request->file('file');
+            // Store the file on S3 and get the file path
+            $attendances = [];
+    
+            foreach ($startDates as $index => $startDate) {
+               
+    
+                $fileDetails = [];
+                foreach ($files as $fileIndex => $file) {
+                    $path = $file->store('uploads', 's3');
+                    $fileName = basename($path);
+                    $fileDetails[] = [
+                        'file_name' => $file->getClientOriginalName(),
+                        'file' => str_replace('.pdf', '', $fileName) . Str::random(10)
+    
+                    ];
+                }
+    
+                $attendance = new ApproveAttendance();
+                $attendance->user_id = $validated['user_id'];
+                $attendance->start_date = $startDate;
+                $attendance->end_date = $endDates[$index];
+                $attendance->attendance_type = $validated['attendance_type'];
+                $attendance->files = json_encode($fileDetails); // Store files as JSON
+                $attendance->remarks = $validated['remarks'];
+                $attendance->save();
+    
+                // Update time entries with the approved attendance ID
+                TimeEntry::whereBetween('date', [$startDate, $endDates[$index]])
+                ->where('user_id', $validated['user_id'])
+                ->update(['approved_attendance' => $attendance->id]);
+    
+                $attendances[] = $attendance;
             }
+    
+            return response()->json(
+                [
+                    'message' => 'Approved attendance or absence saved successfully',
+                    'data' => $attendances
+                ],
+                200
+            );
 
-            $attendance = new ApproveAttendance();
-            $attendance->user_id = $validated['user_id'];
-            $attendance->start_date = $startDate;
-            $attendance->end_date = $endDates[$index];
-            $attendance->attendance_type = $validated['attendance_type'];
-            $attendance->files = json_encode($fileDetails); // Store files as JSON
-            $attendance->remarks = $validated['remarks'];
-            $attendance->save();
-
-            // Update time entries with the approved attendance ID
-            TimeEntry::whereBetween('date', [$startDate, $endDates[$index]])
-            ->where('user_id', $validated['user_id'])
-            ->update(['approved_attendance' => $attendance->id]);
-
-            $attendances[] = $attendance;
+        }catch(\Exception $e){
+            return response()->json(
+                [
+                    'message' => 'An error occurred while approving attendance.',
+                    'error' => $e->getMessage()
+                ],
+                500
+            );
         }
-
-        return response()->json(
-            $attendance,
-            200
-        );
+       
 
     }
 
     public function download($filename)
     {
-        $path = 'uploads/' . $filename . '.pdf';
-        
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        if (in_array(strtolower($extension), ['jpeg', 'jpg', 'png'])) {
+            $path = 'uploads/' . $filename;
+        } else {
+            $path = 'uploads/' . $filename . '.pdf';
+        }
+                
         if (!Storage::disk('s3')->exists($path)) {
             abort(404);
         }

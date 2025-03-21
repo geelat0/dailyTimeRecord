@@ -41,6 +41,34 @@ class SettingDataTable extends DataTable
                 return "{$amTimeIn} - {$amTimeOut} {$pmTimeIn} - {$pmTimeOut}"; // Return formatted time range
                 
             })
+            ->addColumn('shift_name', function ($row) {
+                return $row->shift->shift_name ?? '';
+            })
+
+            ->addColumn('shift_id', function ($row) {
+                return $row->shift->id ?? '';
+            })
+            
+            ->editColumn('start_date', function ($row) {
+                return $row->start_date ? Carbon::parse($row->start_date)->format('m/d/Y') : '';
+            })
+            ->editColumn('end_date', function ($row) {
+                return $row->end_date ? Carbon::parse($row->end_date)->format('m/d/Y') : '';
+            })
+
+            ->editColumn('am_time_in', function ($row) {
+                return $row->shift->am_time_in ? Carbon::parse($row->shift->am_time_in)->format('h:i A') : '';
+            })
+            ->editColumn('am_time_out', function ($row) {
+                return $row->shift->am_time_out ? Carbon::parse($row->shift->am_time_out)->format('h:i A') : '';
+            })
+            ->editColumn('pm_time_in', function ($row) {
+                return $row->shift->pm_time_in ? Carbon::parse($row->shift->pm_time_in)->format('h:i A') : '';
+            })
+            ->editColumn('pm_time_out', function ($row) {
+                return $row->shift->pm_time_out ? Carbon::parse($row->shift->pm_time_out)->format('h:i A') : '';
+            })
+
             ->editColumn('remarks', function ($row) {
                 return $row->remarks ?? '';
                 
@@ -51,7 +79,9 @@ class SettingDataTable extends DataTable
             })
             ->addColumn('action', function ($row) {
                 return '<div class="flex space-x-2 gap-2">
-                            <button type="button" class="bg-red-500 text-white text-xs px-2 py-2 rounded">Delete</button>
+                            <button type="button" 
+                            class="px-2 py-2 border border-orange-500 bg-white text-orange-500 rounded-lg hover:bg-orange-100 transition-colors text-xs"
+                            >Edit</button>
                         </div>';
                 
             })

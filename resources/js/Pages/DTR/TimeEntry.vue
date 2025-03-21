@@ -13,6 +13,8 @@ const timeEntryId = ref(null)
 const refreshEditModal = ref(false)
 
 
+
+
 const updateTime = () => {
   const now = new Date()
   currentTime.value = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

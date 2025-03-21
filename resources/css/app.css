@@ -190,6 +190,12 @@
     100% { transform: rotate(360deg); }
   }
 
+  .required-field:after {
+    content: "*";
+    color: #f05655;
+  }
+  
+
 
   /* # Design Language
 

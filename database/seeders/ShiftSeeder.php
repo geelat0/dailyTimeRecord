@@ -36,7 +36,7 @@ class ShiftSeeder extends Seeder
                 'is_flexi_schedule' => false,
             ],
             [
-                'shift_name' => 'Night Shift 11pm to 6am',
+                'shift_name' => 'Night Shift 10pm to 6am',
                 'am_time_in' => '22:00:00',
                 'am_time_out' => '02:00:00',
                 'pm_time_in' => '03:00:00',

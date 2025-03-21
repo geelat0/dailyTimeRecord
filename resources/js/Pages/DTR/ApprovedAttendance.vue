@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
@@ -33,6 +33,7 @@ import { Textarea } from '@/Components/ui/textarea'
 import { Calendar } from '@/Components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover'
 import { CalendarIcon } from 'lucide-vue-next'
+import ToastDialog from '@/Components/ToastDialog.vue'
 import {
   DateFormatter,
   getLocalTimeZone,
@@ -48,6 +49,13 @@ const dateRanges = ref([
   }
 ])
 
+const openAlert = ref<boolean>(false)
+const alertMessage = ref<AlertMessage>({
+  title: 'Oh no, something went wrong!',
+  description: 'Please try again later.',
+  variant: ''
+})
+
 const attendanceType = ref('')
 const attendanceTypes = ref([])
 const remarks = ref('')
@@ -55,9 +63,13 @@ const files = ref([])
 const totalSize = ref(0)
 const isLoading = ref(false)
 const attachmentInputRef = ref(null)
+const errors = ref({})
+
+const router = useRouter()
 
 const handleSubmit = async () => {
   isLoading.value = true
+  errors.value = {} // Reset errors
   try {
     const formData = new FormData()
     formData.append('attendance_type', attendanceType.value)
@@ -81,15 +93,29 @@ const handleSubmit = async () => {
     remarks.value = ''
     dateRanges.value = [{ startDate: '', endDate: '' }]
     files.value = []
-
     totalSize.value = 0
     isLoading.value = false
 
-    console.log('Response:', response.data)
-    alert('Approved attendance or absence saved successfully')
+    alertMessage.value.title = 'Success'  
+    alertMessage.value.description = response.data.message
+    alertMessage.value.variant = 'success'
+    openAlert.value = true
+
+    // Wait for the toast dialog to close before redirecting
+    setTimeout(() => {
+        router.push({ name: 'AttachmentHistory' })
+    }, 2000); // Adjust the timeout duration as needed
+
   } catch (error) {
     console.error('Error submitting form:', error)
-    alert('An error occurred while saving approved attendance or absence. Please try again.')
+    if (error.response?.data?.errors) {
+      errors.value = error.response.data.errors
+    }else{
+      alertMessage.value.title = 'Error'
+      alertMessage.value.description = error.response?.data?.message || "Failed to submit schedule change request"
+      alertMessage.value.variant = 'error'
+      openAlert.value = true
+    } 
     isLoading.value = false
   }
 }
@@ -114,19 +140,20 @@ onMounted(() => {
 
 <template>
     <div class="flex flex-col gap-8">
+      <ToastDialog :open="openAlert" :message="alertMessage" @close="(val) => (openAlert = val)" />
         <div class="w-full">
-      <DatePicker :dateRanges="dateRanges" @update:dateRanges="dateRanges = $event" />
+            <DatePicker :dateRanges="dateRanges" @update:dateRanges="dateRanges = $event" :errors="errors" />
         </div>
         <div class="w-full">
-            <AttachmentInput ref="attachmentInputRef" />
+            <AttachmentInput ref="attachmentInputRef" :errors="errors" />
         </div>
 
         <div class="ex-container bg-background p-4">
             <div class="p-2">
                 <div class="">
-                    <Label for="attendanceType" class="required-label text-sm">Attendance Type</Label>
+                    <Label for="attendanceType" class="required-field text-sm">Attendance Type</Label>
                     <Select v-model="attendanceType">
-                        <SelectTrigger class="inline-flex px-4 py-2 h-[52px] w-full border-gray-500 ">
+                        <SelectTrigger class="inline-flex px-4 py-2 h-[52px] w-full border-gray-500" :class="{ 'border-red-500': errors.attendance_type }">
                         <SelectValue placeholder="Select attendance type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -138,14 +165,17 @@ onMounted(() => {
                           </SelectGroup>
                         </SelectContent>
                     </Select>
+                    <p v-if="errors.attendance_type" class="text-sm text-red-500 mt-1">{{ errors.attendance_type[0] }}</p>
                 </div>
 
                 <div class="relative flex flex-col mt-6 mb-6">
-                    <Label for="remarks" class="required-label text-sm">Remarks</Label>
+                    <Label for="remarks" class="required-field text-sm">Remarks</Label>
                     <Textarea v-model="remarks"
                                 id="remarks"
                                 placeholder="Enter remarks"
-                                class="min-h-[100px] border-gray-500" />
+                                class="min-h-[100px] border-gray-500"
+                                 :class="{ 'border-red-500': errors.remarks }" />
+                    <p v-if="errors.remarks" class="text-sm text-red-500 mt-1">{{ errors.remarks[0] }}</p>
                 </div>
 
                 <div class="flex justify-center">

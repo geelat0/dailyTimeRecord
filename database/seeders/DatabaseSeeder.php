@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             ShiftSeeder::class,
-            ShiftScheduleSeeder::class,
+            // ShiftScheduleSeeder::class,
             AttendanceTypeSeeder::class,
         ]);
     }

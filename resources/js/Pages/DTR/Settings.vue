@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import Container from '@/Components/Container.vue'
 import DateFilter from '@/Composable/DateFilter.vue'
 import ChangeSchedule from '@/Composable/ChangeSchedule.vue'
+import EditSchedule from '@/Composable/EditSchedule.vue'
 import {
   Table,
   TableBody,
@@ -105,7 +106,9 @@ onMounted(() => {
                   <TableCell>{{ entry.schedule }}</TableCell>
                   <TableCell>{{ entry.remarks }}</TableCell>
                   <TableCell>{{ entry.status }}</TableCell>
-                  <TableCell v-html="entry.action"></TableCell>
+                  <TableCell >
+                    <EditSchedule :entry="entry" @scheduleUpdated="fetchShiftSchedule"/>
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>

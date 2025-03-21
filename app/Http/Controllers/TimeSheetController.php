@@ -49,7 +49,7 @@ class TimeSheetController extends Controller
                     'pm_time_out' => '17:00:00',
                     'am_late_threshold' => '08:00:00',
                     'pm_late_threshold' => '13:00:00',
-                    'is_flexi_schedule' => true,
+                    'is_flexi_schedule' => false,
                 ];
             } else {
                 $shift = (object) [
@@ -252,18 +252,22 @@ class TimeSheetController extends Controller
 
     public function updateTimeEntry(TimeEntryRequest $request)
     {
-        $amTimeIn = $request->am_time_in ? Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->am_time_in) : null;
-        $amTimeOut = $request->am_time_out ? Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->am_time_out) : null;
-        $pmTimeIn = $request->pm_time_in ?  Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->pm_time_in) : null;
-        $pmTimeOut = $request->pm_time_out ? Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->pm_time_out) : null;
+
+        try {
+            $amTimeIn = $request->am_time_in ? Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->am_time_in) : null;
+            $amTimeOut = $request->am_time_out ? Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->am_time_out) : null;
+            $pmTimeIn = $request->pm_time_in ?  Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->pm_time_in) : null;
+            $pmTimeOut = $request->pm_time_out ? Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->pm_time_out) : null;
 
         // Check if am_time_out is greater than am_time_in and add one day to am_time_out for night shift
             if ($amTimeIn && $amTimeOut && $amTimeOut->lessThan($amTimeIn)) {
                 $amTimeOut->addDay();
-                $pmTimeIn->addDay();
-                $pmTimeOut->addDay();
+                if($pmTimeIn && $pmTimeOut ){
+                    $pmTimeIn->addDay();
+                    $pmTimeOut->addDay();
+                }
             }
-    
+          
             $timeEntry = TimeEntry::updateOrCreate(
                 ['id' => $request->id],
                 [
@@ -287,9 +291,21 @@ class TimeSheetController extends Controller
             $this->computeTimes($timeEntry);
         }
         return response()->json(
-            $timeEntry,
+            [
+                'message' => 'Time entry updated successfully',
+                'data' => $timeEntry
+            ],
             200
         );
+        } catch (\Exception $e) {
+            return response()->json(
+                [
+                    'message' => 'An error occurred while updating the time entry.',
+                    'error' => $e->getMessage()
+                ],
+                500
+            );
+        }
     }
 
     public function getAttendanceType()

@@ -16,7 +16,11 @@ import { cn } from '@/lib/utils'
 import { defineProps, defineEmits } from 'vue'
 
 const props = defineProps({
-  dateRanges: Array
+  dateRanges: Array,
+  errors: {
+    type: Object,
+    default: () => ({})
+  }
 })
 
 const emit = defineEmits(['update:dateRanges'])
@@ -73,7 +77,7 @@ const updateEndDate = (id, date) => {
                                 
                                 <div class="flex justify-between items-center gap-4">
                                     <div class="mb-4 w-full">
-                                        <Label for="startDate" class="required-label text-sm">Start Date</Label>
+                                        <Label for="startDate" class="required-field text-sm">Start Date</Label>
                                         <Popover>
                                             <PopoverTrigger as-child>
                                                 <Button
@@ -81,7 +85,8 @@ const updateEndDate = (id, date) => {
                                                     variant="outline"
                                                     :class="cn(
                                                         'inline-flex items-center whitespace-nowrap rounded-md text-sm ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none border border-gray-500 dark:border-white bg-background hover:text-accent-foreground px-4 py-2 h-[52px] w-full justify-start disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer cursor-pointer',
-                                                        !range.startDate && 'text-muted-foreground'
+                                                        !range.startDate && 'text-muted-foreground',
+                                                        props.errors[`start_date.${index}`] && 'border-red-500'
                                                     )"
                                                 >
                                                     <CalendarIcon class="mr-2 h-4 w-4" />
@@ -92,9 +97,10 @@ const updateEndDate = (id, date) => {
                                                 <Calendar v-model="range.startDate" @update:modelValue="updateStartDate(range.id, $event)" initial-focus />
                                             </PopoverContent>
                                         </Popover>
+                                        <p v-if="props.errors[`start_date.${index}`]" class="text-sm text-red-500 mt-1">{{ props.errors[`start_date.${index}`][0] }}</p>
                                     </div>
                                     <div class="mb-4 w-full">
-                                        <Label for="endDate" class="required-label text-sm">End Date</Label>
+                                        <Label for="endDate" class="required-field text-sm">End Date</Label>
                                         <Popover>
                                             <PopoverTrigger as-child>
                                                 <Button
@@ -102,7 +108,8 @@ const updateEndDate = (id, date) => {
                                                     variant="outline"
                                                     :class="cn(
                                                         'inline-flex items-center whitespace-nowrap rounded-md text-sm ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none border border-gray-500 dark:border-white bg-background hover:text-accent-foreground px-4 py-2 h-[52px] w-full justify-start disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer cursor-pointer',
-                                                        !range.endDate && 'text-muted-foreground'
+                                                        !range.endDate && 'text-muted-foreground',
+                                                        props.errors[`end_date.${index}`] && 'border-red-500'
                                                     )"
                                                 >
                                                     <CalendarIcon class="mr-2 h-4 w-4" />
@@ -113,6 +120,7 @@ const updateEndDate = (id, date) => {
                                                 <Calendar v-model="range.endDate" @update:modelValue="updateEndDate(range.id, $event)" initial-focus />
                                             </PopoverContent>
                                         </Popover>
+                                        <p v-if="props.errors[`end_date.${index}`]" class="text-sm text-red-500 mt-1">{{ props.errors[`end_date.${index}`][0] }}</p>
                                     </div>
                                 </div>
                             </div>

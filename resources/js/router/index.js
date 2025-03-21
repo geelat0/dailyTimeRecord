@@ -5,6 +5,7 @@ import ApprovedAttendance from '@/Pages/DTR/ApprovedAttendance.vue'
 import Settings from '@/Pages/DTR/Settings.vue'
 import SideNavigation from '@/Components/Sidenavigation.vue'
 import AttachmentHistory from '@/Pages/DTR/AttachmentHistory.vue'
+import { useRouter } from 'vue-router'
 
 const routes = [
   {

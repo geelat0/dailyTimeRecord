@@ -1,4 +1,4 @@
-<script setup >
+<script setup lang="ts">
 import { ref, watch } from 'vue'
 import axios from 'axios'
 
@@ -23,10 +23,20 @@ import {
   FormMessage,
 } from '@/Components/ui/form'
 
+import ToastDialog from '@/Components/ToastDialog.vue'
+
 import { Input } from '@/Components/ui/input'
 import { toast } from '@/Components/ui/toast'
 import { toTypedSchema } from '@vee-validate/zod'
 import * as z from 'zod'
+
+const openAlert = ref<boolean>(false)
+
+const alertMessage = ref<AlertMessage>({
+  title: 'Oh no, something went wrong!',
+  description: 'Please try again later.',
+  variant: ''
+})
 
 const form = ref(null)
 const emit = defineEmits(['update'])
@@ -95,12 +105,20 @@ const onSubmit = async (values) => {
       pm_time_out: formValues.value.pmTimeOut
     });
     console.log(formValues.value.date, formValues.value.amTimeIn, formValues.value.amTimeOut, formValues.value.pmTimeIn, formValues.value.pmTimeOut);
-    alert('Time entry updated successfully!');
+
+    alertMessage.value.title = 'Time Entry Updated'
+    alertMessage.value.description = response.data.message
+    alertMessage.value.variant = 'success'
+    openAlert.value = true
+
     emit('update');
     isOpen.value = false;
   } catch (error) {
     console.error('Error updating time entry:', error);
-    alert('An error occurred while updating the time entry.');
+    alertMessage.value.title = 'Error'
+    alertMessage.value.description = error.response?.data?.message || "Failed to update time entry"
+    alertMessage.value.variant = 'error'
+    openAlert.value = true
   } finally {
     isSubmitting.value = false;
   }
@@ -128,9 +146,10 @@ watch(isOpen, (newVal) => {
     :initial-values="formValues"
     
   >
+    <ToastDialog :open="openAlert" :message="alertMessage" @close="(val) => (openAlert = val)" />
     <Dialog v-model:open="isOpen">
       <DialogTrigger as-child>
-        <Button variant="outline" class="px-2 py-2 border border-orange-500 bg-white text-orange-500 rounded-lg hover:bg-orange-100 transition-colors text-sm"
+        <Button variant="outline" class="px-2 py-2 border border-orange-500 bg-white text-orange-500 rounded-lg hover:bg-orange-100 transition-colors text-xs"
         @click="handleDialogOpen">
           Edit      
         </Button>
