@@ -95,7 +95,7 @@ onMounted(() => {
                   <TableHead>Effectivity</TableHead>
                   <TableHead>Schedule</TableHead>
                   <TableHead>Remarks</TableHead>
-                  <TableHead>Status</TableHead>
+                  <!-- <TableHead>Status</TableHead> -->
                   <TableHead>Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -105,7 +105,7 @@ onMounted(() => {
                   <TableCell>{{ entry.effectivity }}</TableCell>
                   <TableCell>{{ entry.schedule }}</TableCell>
                   <TableCell>{{ entry.remarks }}</TableCell>
-                  <TableCell>{{ entry.status }}</TableCell>
+                  <!-- <TableCell>{{ entry.status }}</TableCell> -->
                   <TableCell >
                     <EditSchedule :entry="entry" @scheduleUpdated="fetchShiftSchedule"/>
                   </TableCell>
