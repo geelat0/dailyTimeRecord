@@ -17,7 +17,7 @@ export interface Attachment {
 
 const filesData = ref<Attachment[]>([])
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB in bytes
+const MAX_FILE_SIZE = 25 * 1024 * 1024 // 5MB in bytes
 const totalFileSize = ref<number>(0)
 const errorMessage = ref<string>('')
 
@@ -54,7 +54,7 @@ function onDrop(files: File[] | null) {
   if (files) {
     const validFiles = files.filter((file) => {
       if (file.size > MAX_FILE_SIZE) {
-        errorMessage.value = `File "${file.name}" exceeds 5MB limit`
+        errorMessage.value = `File "${file.name}" exceeds 25MB limit`
         return false
       }
       if (!ALLOWED_FILE_TYPES[file.type as keyof typeof ALLOWED_FILE_TYPES]) {

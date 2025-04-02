@@ -9,6 +9,5 @@ use Inertia\Inertia;
 
 Route::get('/{any}', function () {
     return Inertia::render('App');
-})->where('any', '.*');
-
+})->where('any', '.*')->name('app');
 

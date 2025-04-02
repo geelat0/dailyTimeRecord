@@ -113,7 +113,7 @@ const handleSubmit = async () => {
     }else{
       alertMessage.value.title = 'Error'
       alertMessage.value.description = error.response?.data?.message || "Failed to submit schedule change request"
-      alertMessage.value.variant = 'error'
+      alertMessage.value.variant = 'destructive'
       openAlert.value = true
     } 
     isLoading.value = false
@@ -139,58 +139,55 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="flex flex-col gap-8">
+    <div class="flex flex-col bg-background gap-8">
       <ToastDialog :open="openAlert" :message="alertMessage" @close="(val) => (openAlert = val)" />
         <div class="w-full">
             <DatePicker :dateRanges="dateRanges" @update:dateRanges="dateRanges = $event" :errors="errors" />
-        </div>
-        <div class="w-full">
             <AttachmentInput ref="attachmentInputRef" :errors="errors" />
         </div>
+      
+        <div class="px-10">
+            <div class="">
+                <Label for="attendanceType" class="required-field text-sm">Attendance Type</Label>
+                <Select v-model="attendanceType">
+                    <SelectTrigger class="inline-flex px-4 py-2 h-[52px] w-full border-gray-500" :class="{ 'border-red-500': errors.attendance_type }">
+                    <SelectValue placeholder="Select attendance type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Attendance Types</SelectLabel>
+                        <SelectItem v-for="type in attendanceTypes" :key="type.id" :value="type.id">
+                            {{ type.type }}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                </Select>
+                <p v-if="errors.attendance_type" class="text-sm text-red-500 mt-1">{{ errors.attendance_type[0] }}</p>
+            </div>
 
-        <div class="ex-container bg-background p-4">
-            <div class="p-2">
-                <div class="">
-                    <Label for="attendanceType" class="required-field text-sm">Attendance Type</Label>
-                    <Select v-model="attendanceType">
-                        <SelectTrigger class="inline-flex px-4 py-2 h-[52px] w-full border-gray-500" :class="{ 'border-red-500': errors.attendance_type }">
-                        <SelectValue placeholder="Select attendance type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Attendance Types</SelectLabel>
-                            <SelectItem v-for="type in attendanceTypes" :key="type.id" :value="type.id">
-                                {{ type.type }}
-                            </SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                    <p v-if="errors.attendance_type" class="text-sm text-red-500 mt-1">{{ errors.attendance_type[0] }}</p>
-                </div>
+            <div class="relative flex flex-col mt-6 mb-6">
+                <Label for="remarks" class="required-field text-sm">Remarks</Label>
+                <Textarea v-model="remarks"
+                            id="remarks"
+                            placeholder="Enter remarks"
+                            class="min-h-[100px] border-gray-500"
+                              :class="{ 'border-red-500': errors.remarks }" />
+                <p v-if="errors.remarks" class="text-sm text-red-500 mt-1">{{ errors.remarks[0] }}</p>
+            </div>
 
-                <div class="relative flex flex-col mt-6 mb-6">
-                    <Label for="remarks" class="required-field text-sm">Remarks</Label>
-                    <Textarea v-model="remarks"
-                                id="remarks"
-                                placeholder="Enter remarks"
-                                class="min-h-[100px] border-gray-500"
-                                 :class="{ 'border-red-500': errors.remarks }" />
-                    <p v-if="errors.remarks" class="text-sm text-red-500 mt-1">{{ errors.remarks[0] }}</p>
-                </div>
-
-                <div class="flex justify-center">
-                    
-                </div>
+            <div class="flex justify-center">
+                
             </div>
         </div>
 
         <div class="save-button">
-            <div class="ex-container bg-background mx-auto flex flex-col gap-4 p-12">
+            <div class="mx-auto flex flex-col gap-4 p-12">
                 <div class="flex items-center justify-center">
                 <Button type="submit" @click="handleSubmit" :disabled="isLoading">
-                    <span class="font-semibold uppercase">Save Approved Attendance or Absence</span>
-                    <Icon v-if="!isLoading" icon="mdi:send"
-                /></Button>
+                  <span v-if="isLoading" class="loader"></span> 
+                  <span v-if="isLoading">Saving changes...</span>
+                  <span v-else class="font-semibold uppercase">Save Approved Attendance or Absence</span>
+                </Button>
                 </div>
             </div>
         </div>

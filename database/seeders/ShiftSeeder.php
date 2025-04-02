@@ -23,7 +23,7 @@ class ShiftSeeder extends Seeder
                 'pm_time_out' => '17:00:00',
                 'am_late_threshold' => '08:00:00',
                 'pm_late_threshold' => '13:00:00',
-                'is_flexi_schedule' => true,
+                'is_flexi_schedule' => false,
             ],
             [
                 'shift_name' => 'Standard Day Shift 7am to 4pm',

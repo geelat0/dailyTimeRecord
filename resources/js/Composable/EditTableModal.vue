@@ -117,7 +117,7 @@ const onSubmit = async (values) => {
     console.error('Error updating time entry:', error);
     alertMessage.value.title = 'Error'
     alertMessage.value.description = error.response?.data?.message || "Failed to update time entry"
-    alertMessage.value.variant = 'error'
+    alertMessage.value.variant = 'destructive'
     openAlert.value = true
   } finally {
     isSubmitting.value = false;

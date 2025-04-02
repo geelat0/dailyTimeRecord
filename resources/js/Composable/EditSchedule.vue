@@ -41,6 +41,9 @@ import { ref, onMounted } from 'vue'
 import { getLocalTimeZone, DateFormatter } from '@internationalized/date'
 import { Textarea } from '@/Components/ui/textarea'
 import ToastDialog from '@/Components/ToastDialog.vue'
+import { useMediaQuery } from '@vueuse/core'
+
+
 
 const df = new DateFormatter('en-PH', {})
 const startDate = ref(new Date());
@@ -51,6 +54,9 @@ const isSubmitting = ref(false)
 const isOpen = ref(false)
 const emit = defineEmits(['scheduleUpdated'])
 const errors = ref({})
+const isMobile = useMediaQuery('(max-width: 768px)')
+const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1024px)')
+
 
 const openAlert = ref<boolean>(false)
 
@@ -158,7 +164,7 @@ async function onSubmit(values: any) {
 
         alertMessage.value.title = 'Error'
         alertMessage.value.description = error.response?.data?.message || "Failed to submit schedule change request"
-        alertMessage.value.variant = 'error'
+        alertMessage.value.variant = 'destructive'
         openAlert.value = true
 
     }

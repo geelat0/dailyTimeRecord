@@ -4,6 +4,7 @@ import { onMounted, ref, computed } from 'vue'
 import Container from '@/Components/Container.vue'; 
 import EditTimeEntry from '@/Composable/EditTimeEntry.vue'
 import PageLoader from '@/Components/PageLoader.vue';
+import { useMediaQuery } from '@vueuse/core'
 
 const currentTime = ref('')
 const currentDate = ref('')
@@ -11,8 +12,7 @@ const isDialogOpen = ref(false)
 const isLoading = ref(false)
 const timeEntryId = ref(null)
 const refreshEditModal = ref(false)
-
-
+const isMobile = useMediaQuery('(max-width: 768px)')
 
 
 const updateTime = () => {
@@ -171,14 +171,13 @@ onMounted(() => {
     <div class="flex flex-col gap-8">
         <Container class="flex flex-col gap-4 " header-text="Add Time Entry">
             <template #header>
-                <div class="text-center mb-8">
-                    <h1 class="text-8xl font-bold text-orange-500" id="clock">{{ currentTime }}</h1>
-                    <p class="text-xl text-black-600 mt-2" id="date">{{ currentDate }}</p>
-                </div>
-            </template>
+                <div class="text-center mb-2">
+                  <h1 :class="isMobile ? 'text-6xl' : 'text-8xl'" class="font-bold text-orange-500" id="clock">{{ currentTime }}</h1>
+                  <p class="text-xl text-black-600 mt-2" id="date">{{ currentDate }}</p>
+                </div>    </template>
 
             <!-- Time Buttons -->
-            <div class="flex gap-4 mb-12 justify-center relative">
+            <div class="flex gap-4 justify-center relative">
               <div v-if="isLoading" >
                   <PageLoader />
                 </div>
@@ -209,39 +208,38 @@ onMounted(() => {
 
           
             <div class="w-full max-w-8xl p-4 sm:p-10 flex justify-between items-center">
-                <h2 class="text-gray-700 text-lg sm:text-xl mb-4">Today's Record </h2>
+                <h2 class="text-gray-700 text-lg sm:text-xl mb-2 dark:text-white">Today's Record </h2>
                 <EditTimeEntry @time-entry-updated="getTimeEntries"
                 :should-refresh="refreshEditModal" />
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 dark:bg-dark-background">
                 <!-- AM Time In -->
-                <div class="bg-white rounded-lg p-4 sm:p-8 shadow-md">
-                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2" id="am_time_in">00:00 --</div>
-                    <div class="text-gray-600">AM Time-In</div>
+                <div class="bg-background rounded-lg p-4 sm:p-8 shadow-md">
+                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2 dark:text-white" id="am_time_in">00:00 --</div>
+                    <div class="text-gray-600 dark:text-white">AM Time-In</div>
                 </div>
 
                 <!-- AM Time Out -->
-                <div class="bg-white rounded-lg p-4 sm:p-8 shadow-md">
-                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2" id="am_time_out">00:00 --</div>
-                    <div class="text-gray-600">AM Time-Out</div>
+                <div class="bg-background rounded-lg p-4 sm:p-8 shadow-md dark:bg-dark-background">
+                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2 dark:text-white" id="am_time_out">00:00 --</div>
+                    <div class="text-gray-600 dark:text-white">AM Time-Out</div>
                 </div>
 
                 <!-- PM Time In -->
-                <div class="bg-white rounded-lg p-4 sm:p-8 shadow-md">
-                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2" id="pm_time_in">00:00 --</div>
-                    <div class="text-gray-600">PM Time-In</div>
+                <div class="bg-background rounded-lg p-4 sm:p-8 shadow-md dark:bg-dark-background">
+                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2 dark:text-white" id="pm_time_in">00:00 --</div>
+                    <div class="text-gray-600 dark:text-white">PM Time-In</div>
                 </div>
 
                 <!-- PM Time Out -->
-                <div class="bg-white rounded-lg p-4 sm:p-8 shadow-md">
-                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2" id="pm_time_out">00:00 --</div>
-                    <div class="text-gray-600">PM Time-Out</div>
+                <div class="bg-background rounded-lg p-4 sm:p-8 shadow-md dark:bg-dark-background">
+                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2 dark:text-white" id="pm_time_out">00:00 --</div>
+                    <div class="text-gray-600 dark:text-white">PM Time-Out</div>
                 </div>
             </div>  
         </Container>
     </div>
-    
 </template>
 
 <style scoped>

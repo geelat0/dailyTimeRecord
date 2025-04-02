@@ -4,6 +4,7 @@ import Container from '@/Components/Container.vue'
 import DateFilter from '@/Composable/DateFilter.vue'
 import EditTimeEntry from '@/Composable/EditTimeEntry.vue'
 import PageLoader from '@/Components/PageLoader.vue';
+import ViewFiles from '@/Composable/ViewFiles.vue';
 
 
 import {
@@ -22,6 +23,8 @@ import {
   PaginationNext,
   PaginationPrev,
 } from '@/Components/ui/pagination'
+import { useMediaQuery } from '@vueuse/core'
+
 
 const history = ref([]);
 const selectedEntry = ref(null);
@@ -30,7 +33,7 @@ const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const totalItems = ref(0);
 const currentDateFilter = ref({ startDate: null, endDate: null });
-
+const isMobile = useMediaQuery('(max-width: 768px)')
 
 const fetchHistory = async (dates = {}) => {
   isLoading.value = true; // Set loading to true before fetching
@@ -73,7 +76,7 @@ onMounted(() => {
   <div class="flex flex-col gap-8">
     <Container class="flex flex-col gap-4" header-text="Attachment History">
       <template #header>
-        <div class="flex flex-col gap-4 items-end">
+        <div :class="['flex flex-col gap-4', { 'items-end': !isMobile, 'items-center': isMobile }]">
           <DateFilter @date-change="handleDateChange"/>
         </div>
         <div class="flex flex-col gap-2">
@@ -98,7 +101,10 @@ onMounted(() => {
                   <TableCell>{{ entry.effectivity }}</TableCell>
                   <TableCell>{{ entry.attendance_type }}</TableCell>
                   <TableCell>{{ entry.remarks }}</TableCell>
-                  <TableCell v-html="entry.attachment"></TableCell>
+                  <TableCell>  
+                    <ViewFiles :entry="entry" />
+                  </TableCell>
+                  <!-- <TableCell v-html="entry.attachment"></TableCell> -->
                   <TableCell>{{ entry.created_at }}</TableCell>
                   <!-- <TableCell  v-html="entry.edit"></TableCell> -->
                 </TableRow>

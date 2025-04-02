@@ -11,20 +11,24 @@ import AvatarPopover from '@/Components/AvatarPopover.vue';
 import Sidenavigation from '@/Components/Sidenavigation.vue';
 import { RouterView } from 'vue-router'
 
-const loadingTime = ref(true)
+import NavMenu from '@/Components/NavMenu.vue';
 
+const loadingTime = ref(true)
+const isMobile = useMediaQuery('(max-width: 768px)')
+const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1024px)')
 onMounted(() => {
   setTimeout(() => {
     loadingTime.value = false
   }, 3000)
 })
+
 </script>
 
 <template>
   <FadeTransition>
     <!-- <Loader  v-if="loadingTime" /> -->
     <div
-      class="bg-support relative flex min-h-screen flex-col items-center gap-4 overflow-hidden p-4"
+      class="bg-support relative flex min-h-screen flex-col items-center gap-4 overflow-hidden p-4 dark:text-white"
     >
       <!-- <ToastDialog /> -->
       <Card
@@ -35,13 +39,17 @@ onMounted(() => {
           <AvatarPopover />
         </div>
       </Card>
-
-        <div class="flex gap-4 w-full flex-1">
+      <div v-if="isMobile || isTablet" class="w-full">
+        <NavMenu/>
+      </div>
+      <div class="flex gap-4 w-full flex-1 ">
+        <div v-if="!isMobile && !isTablet" >
           <Sidenavigation />
-          <div class="w-full">
-            <RouterView/>
-          </div>
         </div>
+        <div class="w-full">
+          <RouterView/>
+        </div>
+      </div>
       <Footer />
     </div>
   </FadeTransition>

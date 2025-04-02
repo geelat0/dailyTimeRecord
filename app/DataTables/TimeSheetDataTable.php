@@ -2,6 +2,7 @@
 
 namespace App\DataTables;
 
+use App\Models\AttendanceType;
 use App\Models\TimeEntry;
 use App\Models\TimeSheet;
 use Carbon\Carbon;
@@ -92,27 +93,93 @@ class TimeSheetDataTable extends DataTable
             $pm_time_out = $row->pm_time_out ? Carbon::parse($row->pm_time_out)->format('H:i') : '';
             return '<button type="button" class="cursor-pointer text-orange-500 underline italic edit-time-entry" data-id="' . $row->id . '" data-am-time-in="' .  $am_time_in . '" data-am-time-out="' . $am_time_out . '" data-pm-time-in="' . $pm_time_in . '" data-pm-time-out="' . $pm_time_out  . '" data-date="' . $date . '">Edit</button>';
         })
+
+        ->addColumn('attendance_type', function ($row) {
+
+            $attendanceType = AttendanceType::find($row->attendance_type);
+            if ($attendanceType) {
+                return $attendanceType->type;
+            }
+        })
+
+        // ->addColumn('attachment', function ($row) {
+        //     $attachments = json_decode($row->files, true);
+        //     if (!is_array($attachments)) {
+        //         return '';
+        //     }
+            
+        //     return implode(', ', array_map(function($file) {
+        //         if (isset($file['file'])) {
+        //             $filename = substr($file['file'], 0, -10);
+        //             $originalName = $file['file_name'];
+        //             $downloadUrl = route('attachment.download', ['filename' => $filename]);
+        //             $fileExtension = pathinfo($originalName, PATHINFO_EXTENSION);
+                    
+        //             if (in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'])) {
+        //                 return '<a href="' . $downloadUrl . '" class="underline italic font-semibold" target="_blank">' . ($file['file_name'] ?? 'View Image') . '</a>';
+        //             } else {
+        //                 return '<a href="' . $downloadUrl . '" class="underline italic font-semibold">' . ($file['file_name'] ?? 'Download') . '</a>';
+        //             }
+        //         }
+        //         return '';
+        //     }, $attachments));
+        // })
+
+
+        // ->addColumn('attachment', function ($row) {
+        //     $attachments = json_decode($row->files, true);
+        //     if (!is_array($attachments)) {
+        //         return '';
+        //     }
+        
+        //     return json_encode(array_map(function ($file) {
+        //         $filename = substr($file['file'], 0, -10);
+        //         $originalName = $file['file_name'];
+        //         $downloadUrl = route('attachment.download', ['filename' => $filename]);
+        //         $fileExtension = pathinfo($originalName, PATHINFO_EXTENSION);
+        
+        //         return [
+        //             'file_url' => $downloadUrl,
+        //             'file_name' => $originalName,
+        //             'file_type' => $fileExtension,
+        //             'is_image' => in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg']),
+        //         ];
+        //     }, $attachments));
+        // })
+
         ->addColumn('attachment', function ($row) {
             $attachments = json_decode($row->files, true);
             if (!is_array($attachments)) {
                 return '';
             }
-            
-            return implode(', ', array_map(function($file) {
-                if (isset($file['file'])) {
-                    $filename = substr($file['file'], 0, -10);
-                    $originalName = $file['file_name'];
-                    $downloadUrl = route('attachment.download', ['filename' => $filename]);
-                    $fileExtension = pathinfo($originalName, PATHINFO_EXTENSION);
-                    
-                    if (in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'])) {
-                        return '<a href="' . $downloadUrl . '" class="underline italic font-semibold" target="_blank">' . ($file['file_name'] ?? 'View Image') . '</a>';
-                    } else {
-                        return '<a href="' . $downloadUrl . '" class="underline italic font-semibold">' . ($file['file_name'] ?? 'Download') . '</a>';
+
+            $processedFiles = [];
+            $uniqueFileNames = [];
+            $tempDate = $row->temp_date; // Match with temp_date
+
+            foreach ($attachments as $dateGroup) {
+                if (isset($dateGroup['date']) && $dateGroup['date'] === $tempDate && isset($dateGroup['files']) && is_array($dateGroup['files'])) {
+                    foreach ($dateGroup['files'] as $file) {
+                        $originalName = $file['file_name'];
+                        if (!in_array($originalName, $uniqueFileNames)) {
+                            $filename = substr($file['file'], 0, -10);
+                            $downloadUrl = route('attachment.download', ['filename' => $filename]);
+                            $fileExtension = pathinfo($originalName, PATHINFO_EXTENSION);
+                            
+                            $processedFiles[] = [
+                                'date' => $dateGroup['date'],
+                                'file_url' => $downloadUrl,
+                                'file_name' => $originalName,
+                                'file_type' => $fileExtension,
+                                'is_image' => in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg']),
+                            ];
+                            $uniqueFileNames[] = $originalName; // Track unique file names
+                        }
                     }
                 }
-                return '';
-            }, $attachments));
+            }
+        
+            return json_encode($processedFiles);
         })
 
         ->rawColumns(['Day', 'Edit', 'remarks', 'attachment']);
@@ -128,6 +195,8 @@ class TimeSheetDataTable extends DataTable
     {
         $startDate = request('start_date');
         $endDate = request('end_date');
+        $user_id = 1;
+
 
         if (!$startDate || !$endDate) {
             $startDate = now()->startOfMonth()->format('Y-m-d');
@@ -148,17 +217,23 @@ class TimeSheetDataTable extends DataTable
         $tempDatesQuery = implode(' UNION ALL SELECT ', array_map(function($date) {
             return "'{$date['day']}' as day, '{$date['date']}' as date";
         }, $dates));
+        
 
-        return $model->newQuery()
-            ->select('time_entries.*', 'temp_dates.day as temp_day', 'temp_dates.date as temp_date', 'approved_attendance.files')
+        $query = $model->newQuery()
+            ->select('time_entries.*', 'temp_dates.day as temp_day', 'temp_dates.date as temp_date', 'approved_attendance.files', 'approved_attendance.attendance_type')
             ->from(DB::raw("(SELECT $tempDatesQuery) as temp_dates"))
-            ->leftJoin('time_entries', DB::raw('DATE(time_entries.date)'), '=', 'temp_dates.date')
-            ->leftJoin('approved_attendance', function ($join) {
-                $join->on(DB::raw('DATE_FORMAT(temp_dates.date, "%Y-%m-%d")'), '>=', 'approved_attendance.start_date')
-                     ->on(DB::raw('DATE_FORMAT(temp_dates.date, "%Y-%m-%d")'), '<=', 'approved_attendance.end_date');
+            ->leftJoin('time_entries', function ($join) use($user_id) {
+            $join->on(DB::raw('DATE(time_entries.date)'), '=', 'temp_dates.date')
+                 ->where('time_entries.user_id', $user_id);
+            })
+            ->leftJoin('approved_attendance', function ($join) use($user_id) {
+            $join->on(DB::raw('DATE_FORMAT(temp_dates.date, "%Y-%m-%d")'), '>=', 'approved_attendance.start_date')
+                 ->on(DB::raw('DATE_FORMAT(temp_dates.date, "%Y-%m-%d")'), '<=', 'approved_attendance.end_date')
+                 ->where('approved_attendance.user_id', $user_id);
             })
             ->whereBetween('temp_dates.date', [$startDate, $endDate]);
-            // ->where('time_entries.user_id', Auth::user()->id);
+            return $query;
+
     }
 
     /**
@@ -201,6 +276,7 @@ class TimeSheetDataTable extends DataTable
             Column::make('undertime_minutes')->title('Undertime'),
             Column::make('remarks'),
             Column::make('attachment'),
+            Column::make('attendance_type'),
             Column::make('Edit'),
             // Column::make('Action'),
         ];

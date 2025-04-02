@@ -3,9 +3,9 @@ import TimeEntry from '@/Pages/DTR/TimeEntry.vue'
 import TimeSheet from '@/Pages/DTR/TimeSheet.vue'
 import ApprovedAttendance from '@/Pages/DTR/ApprovedAttendance.vue'
 import Settings from '@/Pages/DTR/Settings.vue'
-import SideNavigation from '@/Components/Sidenavigation.vue'
 import AttachmentHistory from '@/Pages/DTR/AttachmentHistory.vue'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue'
+
 
 const routes = [
   {
@@ -15,7 +15,10 @@ const routes = [
     meta: {
       id: 1,
       label: 'Add Time Entry',
-      icon: 'mdi:access-time'
+      icon: 'mdi:access-time',
+      group: 'Time Entry'
+
+      
     }
     
   },
@@ -27,6 +30,8 @@ const routes = [
       id: 2,
       label: 'View Time Sheet',
       icon: 'mdi:timetable',
+      group: 'Time Entry'
+
     }
   },
   {
@@ -37,6 +42,8 @@ const routes = [
       id: 3,
       label: 'Add Approved Attendance/Absence',
       icon: 'mdi:add',
+      group: 'Attachments'
+
     }
   },
   {
@@ -47,23 +54,29 @@ const routes = [
       id: 4,
       label: 'Attachment History',
       icon: 'mdi:attach-file',
+      group: 'Attachments'
+
     }
   },
-  {
-    path: '/setting',
-    name: 'Setting',
-    component: Settings,
-    meta:{
-      id: 5,
-      label: 'Settings',
-      icon: 'mdi:settings-outline',
-    }
-  },
+  // {
+  //   path: '/setting',
+  //   name: 'Setting',
+  //   component: Settings,
+  //   meta:{
+  //     id: 5,
+  //     label: 'Settings',
+  //     icon: 'mdi:settings-outline',
+  //   }
+  // },
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes
-})
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes,
+  scrollBehavior() {
+    return { top: 0, behavior: 'smooth' }
+  }
+});
 
 export default router
+

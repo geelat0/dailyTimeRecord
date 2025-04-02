@@ -4,6 +4,7 @@ import Container from '@/Components/Container.vue'
 import DateFilter from '@/Composable/DateFilter.vue'
 import EditTableModal from '@/Composable/EditTableModal.vue'
 import PageLoader from '@/Components/PageLoader.vue';
+import ViewFiles from '@/Composable/ViewFiles.vue';
 
 import {
   Table,
@@ -21,6 +22,8 @@ import {
   PaginationNext,
   PaginationPrev,
 } from '@/Components/ui/pagination'
+import { useMediaQuery } from '@vueuse/core'
+
 
 const timeEntries = ref([]);
 const selectedEntry = ref(null);
@@ -28,7 +31,7 @@ const currentPage = ref(1);
 const itemsPerPage = ref(31);
 const totalItems = ref(0);
 const isLoading = ref(false)
-
+const isMobile = useMediaQuery('(max-width: 768px)')
 
 const fetchTimeEntries = async (dates = {}) => {
   isLoading.value = true; // Set loading to true before fetching
@@ -98,7 +101,7 @@ onMounted(() => {
   <div class="flex flex-col gap-8">
     <Container class="flex flex-col gap-4" header-text="View Time Sheet">
       <template #header>
-        <div class="flex flex-col gap-4 items-end">
+        <div :class="['flex flex-col gap-4', { 'items-end': !isMobile, 'items-center': isMobile }]">
           <DateFilter @date-change="handleDateChange"/>
         </div>
         <div class="flex flex-col gap-2">
@@ -119,6 +122,7 @@ onMounted(() => {
                   <TableHead >Late</TableHead >
                   <TableHead >Undertime</TableHead >
                   <TableHead >Remarks</TableHead >
+                  <TableHead >Attendance Type</TableHead >
                   <TableHead >Attachment</TableHead >
                   <TableHead >Edit</TableHead >
 
@@ -126,7 +130,9 @@ onMounted(() => {
               </TableHeader>
               <TableBody>
                 <TableRow v-for="entry in timeEntries.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)" :key="entry.id">
-                  <TableCell v-html="entry.Day"></TableCell>
+                  <TableCell v-html="entry.Day">
+                    
+                  </TableCell>
                   <TableCell>{{ entry.am_time_in }}</TableCell>
                   <TableCell>{{ entry.am_time_out }}</TableCell>
                   <TableCell>{{ entry.pm_time_in }}</TableCell>
@@ -136,7 +142,11 @@ onMounted(() => {
                   <TableCell>{{ entry.late_hours }}</TableCell>
                   <TableCell>{{ entry.undertime_minutes }}</TableCell>
                   <TableCell v-html="entry.remarks"></TableCell>
-                  <TableCell v-html="entry.attachment"></TableCell>
+                  <TableCell>{{ entry.attendance_type }}</TableCell>
+                  <!-- <TableCell v-html="entry.attachment"></TableCell> -->
+                  <TableCell>  
+                    <ViewFiles :entry="entry" />
+                  </TableCell>
                   <TableCell >
                     <EditTableModal
                         :entry="{ id: entry.id, 

@@ -42,22 +42,57 @@ class AttachmentsDataTable extends DataTable
                 
             })
 
+            // ->addColumn('attachment', function ($row) {
+            //     $attachments = json_decode($row->files, true);
+            //     if (!is_array($attachments)) {
+            //         return '';
+            //     }
+                
+            //     return implode(', ', array_map(function($file) {
+            //         if (isset($file['file'])) {
+            //             $filename = substr($file['file'], 0, -10);
+            //             $originalName = $file['file_name'];
+            //             $downloadUrl = route('attachment.download', ['filename' => $filename]);
+            //             return '<a href="' . $downloadUrl . '" class="underline italic font-semibold">' . ($file['file_name'] ?? 'Download') . '</a>';
+            //         }
+            //         return '';
+            //     }, $attachments));
+            // })
+
             ->addColumn('attachment', function ($row) {
                 $attachments = json_decode($row->files, true);
                 if (!is_array($attachments)) {
                     return '';
                 }
-                
-                return implode(', ', array_map(function($file) {
-                    if (isset($file['file'])) {
-                        $filename = substr($file['file'], 0, -10);
-                        $originalName = $file['file_name'];
-                        $downloadUrl = route('attachment.download', ['filename' => $filename]);
-                        return '<a href="' . $downloadUrl . '" class="underline italic font-semibold">' . ($file['file_name'] ?? 'Download') . '</a>';
+
+                $processedFiles = [];
+                $uniqueFileNames = [];
+
+                foreach ($attachments as $dateGroup) {
+                    if (isset($dateGroup['files']) && is_array($dateGroup['files'])) {
+                        foreach ($dateGroup['files'] as $file) {
+                            $originalName = $file['file_name'];
+                            if (!in_array($originalName, $uniqueFileNames)) {
+                                $filename = substr($file['file'], 0, -10);
+                                $downloadUrl = route('attachment.download', ['filename' => $filename]);
+                                $fileExtension = pathinfo($originalName, PATHINFO_EXTENSION);
+                                
+                                $processedFiles[] = [
+                                    'date' => $dateGroup['date'],
+                                    'file_url' => $downloadUrl,
+                                    'file_name' => $originalName,
+                                    'file_type' => $fileExtension,
+                                    'is_image' => in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg']),
+                                ];
+                                $uniqueFileNames[] = $originalName; // Track unique file names
+                            }
+                        }
                     }
-                    return '';
-                }, $attachments));
+                }
+            
+                return json_encode($processedFiles);
             })
+    
 
             ->editColumn('file_name', function ($row) {
                 return $row->file_name ?? '';

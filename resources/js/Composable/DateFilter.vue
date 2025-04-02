@@ -13,6 +13,7 @@ import {
 } from '@internationalized/date'
 import { CalendarIcon } from 'lucide-vue-next'
 import { ref } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 
 const df = new DateFormatter('en-PH', {
 //   dateStyle: 'long',
@@ -20,7 +21,7 @@ const df = new DateFormatter('en-PH', {
 
 const startDate = ref<DateValue>()
 const endDate = ref<DateValue>()
-
+const isMobile = useMediaQuery('(max-width: 768px)')
 const emit = defineEmits(['dateChange'])
 
 const handleFilter = () => {
@@ -35,8 +36,8 @@ const handleFilter = () => {
 const value = ref<DateValue>()
 </script>
 <template>
-    <div class="flex space-x-4">
-        <div>
+<div :class="[isMobile ? 'flex flex-col items-center space-y-4' : 'flex space-x-4']">
+    <div>
             <label for="start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
             <Popover>
                 <PopoverTrigger as-child>

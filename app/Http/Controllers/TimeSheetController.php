@@ -30,8 +30,6 @@ class TimeSheetController extends Controller
     public function computeTimes($timeEntry){
 
         $shift = null;
-
-
         if ($timeEntry->shift_schedule_id) {
             $shiftSchedule = ShiftSchedule::find($timeEntry->shift_schedule_id);
             $shift = Shift::find($shiftSchedule->shift_id);
@@ -320,5 +318,17 @@ class TimeSheetController extends Controller
             $timeEntry,
             200
         );
+    }
+
+    public function computeRenderedHoursPerCutOff(Request $request){
+        $cutOffOne = 15;
+        $cutOffTwo = 31;
+        $renderedHours = 0;
+        $totalRenderedHours = 0;
+        $timeEntries = TimeEntry::TimeEntries();
+        $timeEntries = $timeEntries->sortBy('date');
+        dd($timeEntries);
+    
+
     }
 }

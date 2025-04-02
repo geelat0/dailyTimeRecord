@@ -133,8 +133,12 @@
     background-color: hsl(0 0% 100%);
   }
 
-  .bg-support{
+  .bg-support {
     background-color: hsl(210, 40%, 96.08%);
+  }
+
+  .dark .bg-support {
+    background-color: hsl(12, 6.5%, 15.1%);
   }
 
 
@@ -166,6 +170,10 @@
 
   .table tr:hover {
       background-color: #f1f1f1;
+  }
+
+  .dark .table tr:hover {
+      background-color: #2d2d2d;
   }
 
   .table td {

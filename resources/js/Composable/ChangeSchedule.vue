@@ -109,7 +109,7 @@ async function onSubmit(values: any) {
     } else {
         alertMessage.value.title = 'Error'
         alertMessage.value.description = error.response?.data?.message || "Failed to submit schedule change request"
-        alertMessage.value.variant = 'error'
+        alertMessage.value.variant = 'destructive'
         openAlert.value = true
     }
   } finally {

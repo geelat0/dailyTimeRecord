@@ -20,12 +20,18 @@ import {
   PaginationNext,
   PaginationPrev,
 } from '@/Components/ui/pagination'
+import { useMediaQuery } from '@vueuse/core'
+
 
 const shiftSchedule = ref([]);
 const selectedEntry = ref(null);
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const totalItems = ref(0);
+const isMobile = useMediaQuery('(max-width: 768px)')
+const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1024px)')
+
+
 
 const currentDateFilter = ref({ startDate: null, endDate: null });
 
@@ -80,10 +86,9 @@ onMounted(() => {
   <div class="flex flex-col gap-8">
     <Container class="flex flex-col gap-4" header-text="Setting">
       <template #header>
-  
-        <div class="flex justify-between items-end">
-            <ChangeSchedule @schedule-updated="fetchShiftSchedule"/>
-            <DateFilter @date-change="handleDateChange"/>
+        <div :class="isMobile ? 'flex flex-col gap-4 items-center' : isTablet ? 'flex flex-col gap-4 items-start' : 'flex justify-between items-end'">
+            <ChangeSchedule class="w-full sm:w-auto" @schedule-updated="fetchShiftSchedule"/>
+            <DateFilter class="w-full sm:w-auto" @date-change="handleDateChange"/>
         </div>
 
         <div class="flex flex-col gap-2">
