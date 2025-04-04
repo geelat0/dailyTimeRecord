@@ -159,6 +159,8 @@ class TimeSheetController extends Controller
         }
         if ($flexibleSchedule) {
             $expectedTimeout = $actual1stHalfTimeIn ? (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M")) : (clone $expected2ndHalfTimeIn)->add(new DateInterval("PT" . (($totalRenderingMinutes / 2) - 30) . "M"));
+            // $expectedTimeout = (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M"));
+            // dd($expectedTimeout);
             if ($actual2ndHalfTimeOut && $actual2ndHalfTimeOut < $expectedTimeout) {
                 $interval2ndHalfUnder = $actual2ndHalfTimeOut->diff($expectedTimeout);
                 $secondHalfUnderTime = max(0, ($interval2ndHalfUnder->days * 24 * 60) + ($interval2ndHalfUnder->h * 60) + $interval2ndHalfUnder->i);
@@ -184,6 +186,7 @@ class TimeSheetController extends Controller
         // Calculate excess time beyond end time based on schedule type
         if ($flexibleSchedule) {
             $expectedTimeout = $actual1stHalfTimeIn ? (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M")) : (clone $expected2ndHalfTimeIn)->add(new DateInterval("PT" . (($totalRenderingMinutes / 2) - 30) . "M"));
+            // $expectedTimeout = (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M"));
 
             if ($actual2ndHalfTimeOut > $expectedTimeout) {
                 $intervalExcessTimeBeyondEndTime = $expectedTimeout->diff($actual2ndHalfTimeOut);
@@ -207,6 +210,7 @@ class TimeSheetController extends Controller
                 $adjusted1stHalfTimeIn = $expected1stHalfTimeIn;
             }
             $expectedTimeout = $actual1stHalfTimeIn ? (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M")) : (clone $expected2ndHalfTimeIn)->add(new DateInterval("PT" . (($totalRenderingMinutes / 2) - 30) . "M"));
+            // $expectedTimeout = (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M"));
             // $expectedTimeout = new DateTime($expectedTimeout);
             $firstHalfLength = $actual1stHalfTimeOut ? max(0, min($actual1stHalfTimeOut->getTimestamp(), $expected1stHalfTimeOut->getTimestamp()) - max($adjusted1stHalfTimeIn->getTimestamp(), $expected1stHalfTimeIn->getTimestamp())) / 60 : 0;
             $secondHalfLength = $actual2ndHalfTimeOut ? max(0, min($actual2ndHalfTimeOut->getTimestamp(), $expectedTimeout->getTimestamp()) - max($actual2ndHalfTimeIn->getTimestamp(), $expected2ndHalfTimeIn->getTimestamp())) / 60 : 0;

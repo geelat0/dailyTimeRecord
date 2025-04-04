@@ -35,7 +35,7 @@ Route::get('/shift-schedule/list', [SettingsController::class, 'index']);
 Route::get('/getShift', [SettingsController::class, 'getShift']);
 Route::post('/shift-schedule/store', [SettingsController::class, 'store']);
 Route::post('/shift-schedule/update', [SettingsController::class, 'update']);
-Route::get('/download-dtr', [PDFController::class, 'downloadDTR']);
+Route::get('/download', [PDFController::class, 'downloadDTR']);
 
 
 

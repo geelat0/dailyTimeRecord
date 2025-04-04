@@ -16,10 +16,11 @@ class PDFController extends Controller
 
     public function downloadDTR()
     {
-        $startDate = '2025-03-16';
-        $endDate = '2025-03-31';
+        $startDate = '2025-04-01';
+        $endDate = '2025-04-15';
         $employeeNo = '1';
         $name = 'John Doe';
+
     
         $dates = [];
         $currentDate = Carbon::parse($startDate);
@@ -55,7 +56,8 @@ class PDFController extends Controller
         $records = TimeEntry::where('user_id', $employeeNo)
             ->whereBetween('date', [$startDate, $endDate])
             ->get()
-            ->mapWithKeys(function ($entry) {
+            ->mapWithKeys(function ($entry)  use(&$totalRenderedMinutes) {
+ 
                 $status = ($entry->am_time_in && $entry->am_time_out || $entry->pm_time_in && $entry->pm_time_out) ? '' : 'Absent';
 
                 return [
@@ -89,13 +91,68 @@ class PDFController extends Controller
     
         // Merge missing dates with actual records
         $finalRecords = collect($records)->merge($dates)->sortKeys()->values();
-    
+
+        $lenghtOfWork = TimeEntry::where('user_id', $employeeNo)
+        ->where('rendered_hours', '!=', null)
+        ->whereBetween('date', [$startDate, $endDate])
+        ->pluck('rendered_hours')
+        ->map(function ($time) {
+            // Convert rendered_hours (e.g., "HH:mm") to total minutes
+            $timeParts = explode(':', $time);
+            $hours = (int) $timeParts[0];
+            $minutes = (int) $timeParts[1];
+            return ($hours * 60) + $minutes;
+        })
+        ->sum();
+
+        $late = TimeEntry::where('user_id', $employeeNo)
+        ->where('late_hours', '!=', null)
+        ->whereBetween('date', [$startDate, $endDate])
+        ->pluck('late_hours')
+        ->map(function ($time) {
+            // Convert late_hours (e.g., "HH:mm") to total minutes
+            $timeParts = explode(':', $time);
+            $hours = (int) $timeParts[0];
+            $minutes = (int) $timeParts[1];
+            return ($hours * 60) + $minutes;
+        })
+        ->sum();
+        $undertime = TimeEntry::where('user_id', $employeeNo)
+        ->where('undertime_minutes', '!=', null)    
+        ->whereBetween('date', [$startDate, $endDate])
+        ->pluck('undertime_minutes')
+        ->map(function ($time) {
+            // Convert late_hours (e.g., "HH:mm") to total minutes
+            $timeParts = explode(':', $time);
+            $hours = (int) $timeParts[0];
+            $minutes = (int) $timeParts[1];
+            return ($hours * 60) + $minutes;
+        })
+        ->sum();
+
+        $overtime = TimeEntry::where('user_id', $employeeNo)    
+        ->where('excess_minutes', '!=', null)
+        ->whereBetween('date', [$startDate, $endDate])
+        ->pluck('excess_minutes')
+        ->map(function ($time) {
+            // Convert late_hours (e.g., "HH:mm") to total minutes
+            $timeParts = explode(':', $time);
+            $hours = (int) $timeParts[0];
+            $minutes = (int) $timeParts[1];
+            return ($hours * 60) + $minutes;
+        })
+        ->sum();
+
         $data = [
             'start' => $startDate,
             'end' => $endDate,
             'employee_no' => $employeeNo,
             'name' => $name,
             'records' => $finalRecords,
+            'lengthOfWork' => $lenghtOfWork,
+            'late' => $late,
+            'undertime' => $undertime,
+            'overtime' => $overtime,
         ];
     
         return Pdf::view('dtr', $data)
