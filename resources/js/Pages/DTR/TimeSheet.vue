@@ -37,14 +37,12 @@ const fetchTimeEntries = async (dates = {}) => {
   isLoading.value = true; // Set loading to true before fetching
   await new Promise(resolve => setTimeout(resolve, 1000)); // Load for 3 seconds
     try {
-      const filterDates = Object.keys(dates).length ? dates : currentDateFilter.value;
+      const filterDates = Object.keys(dates).length ? dates : {
+        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+        endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0]
+      };
+      const response = await axios.get(`/api/time-entries/list/${filterDates.startDate}/${filterDates.endDate}`);
 
-        const response = await axios.get('/api/time-entries/list', {
-            params: {
-                start_date: dates.startDate,
-                end_date: dates.endDate
-            }
-        });
         timeEntries.value = response.data.data;
         console.log(response.data.data);
         totalItems.value = response.data.data.length; 

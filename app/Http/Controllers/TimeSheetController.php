@@ -15,8 +15,19 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use OpenSpout\Common\Entity\Row;
 
+/**
+ * TimeSheetController handles all time sheet related operations including
+ * time entry management, computation of work hours, and attendance tracking.
+ */
 class TimeSheetController extends Controller
 {
+    /**
+     * Display the time sheet index page or return JSON data for Vue components
+     *
+     * @param Request $request The HTTP request object
+     * @param TimeSheetDataTable $dataTable The data table instance for time sheet data
+     * @return \Inertia\Response|JsonResponse Returns either an Inertia response or JSON data
+     */
     public function index(Request $request, TimeSheetDataTable $dataTable)
     {
         if ($request->wantsJson()) {
@@ -27,6 +38,13 @@ class TimeSheetController extends Controller
         ]);
     }
 
+    /**
+     * Compute and process time-related calculations for a time entry
+     * This includes calculating late time, undertime, excess time, and rendered hours
+     *
+     * @param TimeEntry $timeEntry The time entry to compute times for
+     * @return array Returns an array containing computed time metrics
+     */
     public function computeTimes($timeEntry){
 
         $shift = null;
@@ -238,6 +256,12 @@ class TimeSheetController extends Controller
         ];
     }
  
+    /**
+     * Process and compute all time entries in the system
+     * This function iterates through all time entries and computes their time metrics
+     *
+     * @return JsonResponse Returns a JSON response containing all processed time entries
+     */
     public function computeTimeEntries()
     {
         $timeEntries = TimeEntry::TimeEntries();
@@ -252,6 +276,16 @@ class TimeSheetController extends Controller
         );
     }
 
+    /**
+     * Update an existing time entry or create a new one for login user
+     * 
+     * 
+     * Handles both AM and PM time entries with proper date handling
+     *
+     * @param TimeEntryRequest $request The validated request containing time entry data
+     * @return JsonResponse Returns a JSON response with the updated/created time entry
+     * @throws \Exception If an error occurs during the update process
+     */
     public function updateTimeEntry(TimeEntryRequest $request)
     {
 
@@ -269,6 +303,10 @@ class TimeSheetController extends Controller
                     $pmTimeOut->addDay();
                 }
             }
+
+            $timeEntry = TimeEntry::where('id', $request->id)->first();
+            
+
           
             $timeEntry = TimeEntry::updateOrCreate(
                 ['id' => $request->id],
@@ -283,6 +321,7 @@ class TimeSheetController extends Controller
             );
 
         $timeEntry->save();
+
         if($amTimeIn && $amTimeOut || $pmTimeIn && $pmTimeOut){
             $shiftSchedule = ShiftSchedule::getShiftSchedule($timeEntry->date, 1);
             if($shiftSchedule){
@@ -310,12 +349,23 @@ class TimeSheetController extends Controller
         }
     }
 
+    /**
+     * Retrieve all available attendance types
+     *
+     * @return mixed Returns the list of attendance types
+     */
     public function getAttendanceType()
     {
         $attendanceType = AttendanceType::getAttendanceType();
         return $attendanceType;
     }
 
+    /**
+     * Get a specific time entry by its ID
+     *
+     * @param Request $request The HTTP request containing the time entry ID
+     * @return JsonResponse Returns a JSON response with the requested time entry
+     */
     public function getTimeEntryByID(Request $request){
         $timeEntry = TimeEntry::TimeEntriesByID($request->id);
         return response()->json(
@@ -324,6 +374,13 @@ class TimeSheetController extends Controller
         );
     }
 
+    /**
+     * Compute the total rendered hours for a specific cutoff period
+     * This function calculates work hours between two cutoff dates
+     *
+     * @param Request $request The HTTP request object
+     * @return void Currently under development
+     */
     public function computeRenderedHoursPerCutOff(Request $request){
         $cutOffOne = 15;
         $cutOffTwo = 31;

@@ -22,6 +22,7 @@ class TimeEntryRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'id' => 'nullable|exists:time_entries,id',
             'date' => 'required',
             'am_time_in' => 'nullable',
             'am_time_out' => 'nullable',

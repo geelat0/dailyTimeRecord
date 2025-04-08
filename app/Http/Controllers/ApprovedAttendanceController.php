@@ -11,9 +11,19 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-
+/**
+ * Controller for managing approved attendance records and file attachments.
+ * Handles operations related to attendance approval, file uploads, and downloads.
+ */
 class ApprovedAttendanceController extends Controller
 {
+    /**
+     * Display a listing of approved attendance records.
+     * 
+     * @param Request $request The HTTP request instance
+     * @param AttachmentsDataTable $dataTable The data table instance for attachments
+     * @return \Inertia\Response|array Returns either an Inertia response or JSON data
+     */
     public function index(Request $request, AttachmentsDataTable $dataTable)
     {
         if ($request->wantsJson()) {
@@ -25,7 +35,11 @@ class ApprovedAttendanceController extends Controller
     }
 
     /**
-     * Store a newly created attendance in storage.
+     * Store a newly created attendance record in storage.
+     * Handles file uploads, date range processing, and attendance approval.
+     * 
+     * @param ApprovedAttendanceRequest $request The validated request containing attendance data
+     * @return \Illuminate\Http\JsonResponse Returns a JSON response with success/error message
      */
     public function store(ApprovedAttendanceRequest $request)
     { 
@@ -186,6 +200,13 @@ class ApprovedAttendanceController extends Controller
 
     }
 
+    /**
+     * Download an attachment file from S3 storage.
+     * 
+     * @param string $filename The name of the file to download
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse Returns the file download response
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException If file doesn't exist
+     */
     public function download($filename)
     {
         $extension = pathinfo($filename, PATHINFO_EXTENSION);

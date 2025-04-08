@@ -12,8 +12,15 @@ use Dompdf\Options;
 
 class PDFController extends Controller
 {
-
-
+    /**
+     * Generates and downloads a Daily Time Record (DTR) PDF for a specific employee and date range.
+     * 
+     * 
+     * The function processes time entries, calculates total work hours, late hours, undertime, and overtime.
+     * It creates a comprehensive DTR report with all necessary time entries and calculations.
+     *
+     * @return \Spatie\LaravelPdf\Pdf A PDF document containing the DTR information
+     */
     public function downloadDTR()
     {
         $startDate = '2025-04-01';
