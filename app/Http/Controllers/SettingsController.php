@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use App\Http\Requests\ShiftScheduleRequest;
 use App\Models\TimeEntry;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * SettingsController handles all settings-related operations for the DTR system.
@@ -106,7 +107,7 @@ class SettingsController extends Controller
 
             $existingShiftSchedule = ShiftSchedule::where('start_date', $validated['start_date'])
                 ->orWhere('end_date', $validated['end_date'])
-                ->where('user_id', 1)
+                ->where('user_id', Auth::user()->id)
                 ->first();
             
 

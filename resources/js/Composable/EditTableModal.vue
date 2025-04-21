@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import axios from 'axios'
 
 import { Button } from '@/Components/ui/button'
@@ -57,6 +57,8 @@ const formValues = ref({
   pmTimeOut: ''
 })
 
+const user = ref(null)
+const date = ref(null)
 const formSchema = toTypedSchema(z.object({
   amTimeIn: z.string().optional(),
   amTimeOut: z.string().optional(),
@@ -71,18 +73,17 @@ const convertTo24HourFormat = (timeString) => {
 
 const handleDialogOpen = async () => {
   isOpen.value = true; // Open the dialog first to ensure content loads
-  console.log(props.entry)
   if (props.entry) {
     try {
       formValues.value = {
         timeEntryID: props.entry.id,
-        date: props.entry.temp_date,
         amTimeIn: props.entry.am_time_in ? convertTo24HourFormat(props.entry.am_time_in) : '',
         amTimeOut: props.entry.am_time_out ?  convertTo24HourFormat(props.entry.am_time_out) : ' ',
         pmTimeIn: props.entry.pm_time_in ? convertTo24HourFormat(props.entry.pm_time_in) : '',
         pmTimeOut: props.entry.pm_time_out ?  convertTo24HourFormat(props.entry.pm_time_out) : '',
       };
-      console.log(formValues.value);
+      date.value = props.entry.temp_date
+      user.value = props.entry.user_id
 
       if (form.value) {
         form.value.resetForm({ values: formValues.value });
@@ -97,14 +98,14 @@ const onSubmit = async (values) => {
   isSubmitting.value = true;
   try {
     const response = await axios.post('/api/time-entries/update', {
+      user_id: user.value,
       id: formValues.value.timeEntryID,
-      date: formValues.value.date,
+      date: date.value,
       am_time_in: formValues.value.amTimeIn,
       am_time_out: formValues.value.amTimeOut,
       pm_time_in: formValues.value.pmTimeIn,
       pm_time_out: formValues.value.pmTimeOut
     });
-    console.log(formValues.value.date, formValues.value.amTimeIn, formValues.value.amTimeOut, formValues.value.pmTimeIn, formValues.value.pmTimeOut);
 
     alertMessage.value.title = 'Time Entry Updated'
     alertMessage.value.description = response.data.message
@@ -119,6 +120,7 @@ const onSubmit = async (values) => {
     alertMessage.value.description = error.response?.data?.message || "Failed to update time entry"
     alertMessage.value.variant = 'destructive'
     openAlert.value = true
+    isOpen.value = false;
   } finally {
     isSubmitting.value = false;
   }
@@ -136,7 +138,6 @@ watch(isOpen, (newVal) => {
     };
   }
 });
-
 </script>
 
 <template>
@@ -156,7 +157,7 @@ watch(isOpen, (newVal) => {
       </DialogTrigger>
       <DialogContent class="max-h-[90vh] sm:max-w-[525px]">
         <DialogHeader>
-            <DialogTitle>Edit Time Entry (<span>{{ formValues.date }}</span>) </DialogTitle>
+            <DialogTitle>Edit Time Entry (<span>{{ date }}</span>) </DialogTitle>
           <DialogDescription>
             Make changes to your time Entry here. Click save when you're done.
           </DialogDescription>

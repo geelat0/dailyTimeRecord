@@ -36,8 +36,8 @@ const handleFilter = () => {
 const value = ref<DateValue>()
 </script>
 <template>
-<div :class="[isMobile ? 'flex flex-col items-center space-y-4' : 'flex space-x-4']">
-    <div>
+    <div :class="[isMobile ? 'flex flex-col items-center space-y-4' : 'flex space-x-4']">
+        <div>
             <label for="start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
             <Popover>
                 <PopoverTrigger as-child>

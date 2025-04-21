@@ -1,5 +1,6 @@
 <script setup lang="ts" >
 import { ref, onMounted, watch} from 'vue'
+import axios from 'axios'
 
 import { Button } from '@/Components/ui/button'
 import {
@@ -40,6 +41,7 @@ const alertMessage = ref<AlertMessage>({
 
 const isOpen = ref(false)
 const imageLoading = ref(true) // State to track image loading
+const isDownloading = ref(false)
 const props = defineProps({
   entry: {
     type: Object,
@@ -48,7 +50,6 @@ const props = defineProps({
 })
 const attachments = ref([])
 const handleFileDialog = () => {
-    console.log(props.entry)
 
   isOpen.value = true
   if (props.entry && props.entry.attachment) {
@@ -80,6 +81,34 @@ const getFileIcon = (fileType: string): string => {
 
 const truncateFileName = (fileName: string): string => {
   return fileName.length > 11 ? fileName.substring(0, 20) + '...' : fileName;
+};
+
+const downloadFile = async (url: string) => {
+    try {
+        isDownloading.value = true
+        const response = await axios.get(url, {
+            responseType: 'blob',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        const blob = new Blob([response.data]);
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        const fileName = url.split('/').pop() || 'download';
+        const isImage = fileName.match(/\.(jpg|jpeg|png)$/i);
+        const finalFileName = isImage ? fileName : fileName.split('.')[0] + '.pdf';
+        
+        link.download = finalFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+        console.error('Error downloading file:', error);
+    } finally {
+        isDownloading.value = false
+    }
 };
 
 </script>
@@ -115,6 +144,7 @@ const truncateFileName = (fileName: string): string => {
                     :href="file.file_url"
                     target="_blank"
                     class="block w-full"
+                    @click.prevent="downloadFile(file.file_url)"
                     >
                     <img
                         :src="file.file_url"
@@ -139,17 +169,19 @@ const truncateFileName = (fileName: string): string => {
                         :href="file.file_url"
                         target="_blank"
                         download
-                        class="flex items-center justify-center w-16 h-16 bg-red-500 text-white rounded-lg"
+                        class="flex items-center justify-center w-16 h-16 bg-red-500 text-white rounded-lg relative"
+                        @click.prevent="downloadFile(file.file_url)"
                     >
+                        <PageLoader v-if="isDownloading" />
                         <span class="text-white text-xl font-bold">
-                        {{ file.file_type.split('.').pop().toUpperCase() }}
-
+                            {{ file.file_type.split('.').pop().toUpperCase() }}
                         </span>
                     </a>
                     <a
                     :href="file.file_url"
                     target="_blank"
                     class="text-black-500 underline mt-2 text-center text-sm flex items-center gap-2"
+                    @click.prevent="downloadFile(file.file_url)"
                     >
                     <Icon :icon="getFileIcon(file.file_type)" width="16" height="16" />
                     <span class="text-sm text-gray-700 truncate" :title="file.file_name">

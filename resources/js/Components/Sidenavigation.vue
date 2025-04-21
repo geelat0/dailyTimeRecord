@@ -9,7 +9,7 @@ const activeItem = ref(null)
 
 const navigationItems = ref(
   router.getRoutes()
-    .filter(r => r.meta?.id) // Ensure the route has an ID
+    .filter(r => r.meta?.id && !r.meta?.hidden) // Ensure the route has an ID and is not hidden
     .reduce((groups, route) => {
       const group = route.meta.group || 'Other'
       if (!groups[group]) groups[group] = []
@@ -17,7 +17,7 @@ const navigationItems = ref(
         id: route.meta.id,
         label: route.meta.label || route.name,
         url: route.path,
-        icon: route.meta.icon || 'mdi:menu'
+        icon: route.meta.icon || 'mdi:menu',
       })
       return groups
     }, {})

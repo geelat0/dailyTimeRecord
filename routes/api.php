@@ -8,8 +8,12 @@ use App\Http\Controllers\TimeEntryController;
 use App\Http\Controllers\TimeSheetController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\RequestStatusController;
 
 Route::middleware('auth:api')->group(function () {
+
+    Route::get('/auth/user', [AuthController::class, 'user']);
 
     Route::post('/time-entries/time-in', [TimeEntryController::class, 'updateTimeIn']);
     Route::post('/time-entries/time-out', [TimeEntryController::class, 'updateTimeOut']);
@@ -32,8 +36,21 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/getShift', [SettingsController::class, 'getShift']);
     Route::post('/shift-schedule/store', [SettingsController::class, 'store']);
     Route::post('/shift-schedule/update', [SettingsController::class, 'update']);
-    Route::get('/download', [PDFController::class, 'downloadDTR']);
+
+    Route::get('/download-dtr', [PDFController::class, 'downloadDTR']);
+    Route::post('/submit-dtr', [PDFController::class, 'submitDTR'])->name('submit-dtr');
+    Route::get('/approvers', [PDFController::class, 'getApprover'])->name('approvers');
+
+
+    Route::get('/request-status/list', [RequestStatusController::class, 'index']);
+    Route::post('/request-status/open-attachment', [RequestStatusController::class, 'openAttachment']);
 });
+
+Route::get('download-attachment/{filename}', [ApprovedAttendanceController::class, 'download'])->name('attachment.download');
+
+
+Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
 
 
 

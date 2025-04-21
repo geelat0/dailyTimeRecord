@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 class ShiftSchedule extends Model
 {
@@ -52,7 +53,7 @@ class ShiftSchedule extends Model
         $startOfMonth = Carbon::now()->startOfMonth()->toDateString();
         $endOfMonth = Carbon::now()->endOfMonth()->toDateString();
 
-        return self::where('user_id', 1)
+        return self::where('user_id', Auth::user()->id)
             ->where('start_date', '<=', $endOfMonth)
             ->where('end_date', '>=', $startOfMonth)
             ->first();
@@ -63,7 +64,7 @@ class ShiftSchedule extends Model
         $startOfMonth = Carbon::now()->startOfMonth()->toDateString();
         $endOfMonth = Carbon::now()->endOfMonth()->toDateString();
 
-        return self::where('user_id', 1)
+        return self::where('user_id', Auth::user()->id)
             ->whereBetween('start_date', [$startOfMonth, $endOfMonth])
             ->orWhereBetween('end_date', [$startOfMonth, $endOfMonth])
             ->get();

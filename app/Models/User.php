@@ -26,9 +26,17 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
+        'user_id',
+        'id_number',
+        'full_name',
         'email',
         'password',
+        'position',
+        'employment_status',
+        'official_station',
+        'signature_url',
+        'empowerex_token',
+        'empowerex_refresh_token'
     ];
 
     /**

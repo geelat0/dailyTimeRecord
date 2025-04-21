@@ -7,6 +7,7 @@ use App\Models\Attachment;
 use App\Models\AttendanceType;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
 use Yajra\DataTables\Html\Button;
@@ -84,7 +85,7 @@ class AttachmentsDataTable extends DataTable
                                     'file_type' => $fileExtension,
                                     'is_image' => in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg']),
                                 ];
-                                $uniqueFileNames[] = $originalName; // Track unique file names
+                                $uniqueFileNames[] = $originalName;
                             }
                         }
                     }
@@ -120,7 +121,7 @@ class AttachmentsDataTable extends DataTable
 
         $startDate = request('start_date');
         $endDate = request('end_date');
-        $user_id = 1;
+        $user_id = Auth::user()->id;
 
         if (!$startDate || !$endDate) {
             $startDate = now()->startOfYear()->format('Y-m-d');

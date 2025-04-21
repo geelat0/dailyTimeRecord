@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attendance_type', function (Blueprint $table) {
+        Schema::create('request_dtr', function (Blueprint $table) {
             $table->id();
-            $table->string('type');
-            $table->string('code');
-            $table->time('default_rendered_hours')->nullable();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('approver_id');
+            $table->string('subject');
+            $table->longText('attachment');
+            $table->string('status');
             $table->timestamps();
         });
     }
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('attendance_type_tablee');
+        Schema::dropIfExists('request_dtr');
     }
 };

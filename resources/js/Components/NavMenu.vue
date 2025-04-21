@@ -12,12 +12,14 @@ const isMobile = useMediaQuery('(max-width: 768px)')
 const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1024px)')
 
 
-const navigationItems = ref(router.getRoutes().map(r => ({
-  id: r.meta?.id || null, // Ensure id exists
-  label: r.meta?.label || r.name,
-  url: r.path,
-  icon: r.meta?.icon || 'mdi:menu' // Default icon
-}))) // Remove items without IDs
+const navigationItems = ref(router.getRoutes()
+  .filter(r => !r.meta?.hidden) // Filter out hidden routes
+  .map(r => ({
+    id: r.meta?.id || null, // Ensure id exists
+    label: r.meta?.label || r.name,
+    url: r.path,
+    icon: r.meta?.icon || 'mdi:menu', // Default icon
+  })))
 
 // Function to update the active item based on the current route
 const updateActiveItem = () => {

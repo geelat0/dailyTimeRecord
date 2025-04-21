@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Models\ShiftSchedule;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
 use Yajra\DataTables\Html\Button;
@@ -97,7 +98,7 @@ class SettingDataTable extends DataTable
         $query = $model->newQuery();
         $startDate = request('start_date');
         $endDate = request('end_date');
-        $user_id = 1;
+        $user_id = Auth::user()->id;
 
         if (!$startDate || !$endDate) {
             $startDate = now()->startOfYear()->format('Y-m-d');

@@ -62,6 +62,26 @@ return [
             ]) : [],
         ],
 
+        'empowerex' => [
+            'driver' => 'mysql',
+            'url' => env('DB_EMPOWEREX_URL'),
+            'host' => env('DB_EMPOWEREX_HOST'),
+            'port' => env('DB_EMPOWEREX_PORT', '3306'),
+            'database' => env('DB_EMPOWEREX_DATABASE', 'empowerex'),
+            'username' => env('DB_EMPOWEREX_USERNAME', 'root'),
+            'password' => env('DB_EMPOWEREX_PASSWORD', ''),
+            'unix_socket' => env('DB_EMPOWEREX_SOCKET', ''),
+            'charset' => env('DB_EMPOWEREX_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_EMPOWEREX_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('DB_EMPOWEREX_SSL_CA'),
+            ]) : [],
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

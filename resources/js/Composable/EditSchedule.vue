@@ -142,7 +142,6 @@ async function onSubmit(values: any) {
       shift_id: selectedSchedule.value == '0' ? formValues.value.shift : selectedSchedule.value,
     };
 
-    console.log('Submitting data:', formData);
 
     const response = await axios.post('/api/shift-schedule/update', formData);
 

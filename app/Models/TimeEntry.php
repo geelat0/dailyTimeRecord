@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class TimeEntry extends Model
 {
@@ -34,22 +35,34 @@ class TimeEntry extends Model
         return $this->hasMany(ApproveAttendance::class);
     }
 
+    public function attendanceType()
+    {
+        return $this->hasOneThrough(
+            AttendanceType::class,
+            ApproveAttendance::class,
+            'id',
+            'id',
+            'approved_attendance',
+            'attendance_type'
+        );
+    }
+
     public static function getTimeEntries()
     {
-        return self::where('user_id', 1)
+        return self::where('user_id', Auth::user()->id)
             ->whereDate('date', today())
             ->first();
     }
 
     public static function TimeEntries()
     {
-        return self::where('user_id', 1)
+        return self::where('user_id', Auth::user()->id)
             ->get();
     }
 
     public static function TimeEntriesByID($id)
     {
-        return self::where('user_id', 1)
+        return self::where('user_id', Auth::user()->id)
             ->where('id', $id)
             ->get();
     }

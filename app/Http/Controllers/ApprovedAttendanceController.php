@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\DataTables\AttachmentsDataTable;
 use App\Http\Requests\ApprovedAttendanceRequest;
 use App\Models\ApproveAttendance;
+use App\Models\AttendanceType;
 use App\Models\TimeEntry;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -51,7 +52,6 @@ class ApprovedAttendanceController extends Controller
             $files = $request->file('file');
             $attendances = [];
 
-    
             foreach ($startDates as $index => $startDate) {
                 $endDate = $endDates[$index];
 
@@ -154,6 +154,7 @@ class ApprovedAttendanceController extends Controller
                     }
                     
                     $existingAttendance->files = json_encode($finalFileDetails);
+                    $existingAttendance->attendance_type = $validated['attendance_type'];
                     $existingAttendance->remarks = $validated['remarks'];
                     $existingAttendance->save();
                     $attendance = $existingAttendance;
@@ -170,10 +171,12 @@ class ApprovedAttendanceController extends Controller
                 }
                 $attendance->save();
 
+                $attendance_type = AttendanceType::where('id', $validated['attendance_type'])->first();
+
                 // Update time entries with the approved attendance ID
                 TimeEntry::whereBetween('date', [$startDate, $endDates[$index]])
                 ->where('user_id', $validated['user_id'])
-                ->update(['approved_attendance' => $attendance->id]);
+                ->update(['approved_attendance' => $attendance->id, 'rendered_hours' => $attendance_type->default_rendered_hours]);
     
                 $attendances[] = $attendance;
 
@@ -209,6 +212,8 @@ class ApprovedAttendanceController extends Controller
      */
     public function download($filename)
     {
+        $token = request()->bearerToken();
+
         $extension = pathinfo($filename, PATHINFO_EXTENSION);
         if (in_array(strtolower($extension), ['jpeg', 'jpg', 'png'])) {
             $path = 'uploads/' . $filename;
@@ -220,7 +225,14 @@ class ApprovedAttendanceController extends Controller
             abort(404);
         }
 
-        return Storage::disk('s3')->download($path);
+        $headers = [
+            'Content-Type' => Storage::disk('s3')->mimeType($path),
+            'Content-Disposition' => 'inline; filename="' . basename($path) . '"'
+        ];
+
+
+
+        return Storage::disk('s3')->response($path, null, $headers);
     }
 
 }

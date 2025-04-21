@@ -94,10 +94,17 @@
             display: inline-block;
             width: 40%;
             text-align: center;
-            margin-top: 10px;
-            border-top: 1px solid black;
-            margin-right: 2%; /* Add space between the two divs */
+            margin: 0 2%;
             font-size: 10px;
+            position: relative;
+        }
+        .signature div::before {
+            content: '';
+            position: absolute;
+            top: -25px;
+            left: 0;
+            width: 100%;
+            border-top: 1px solid black;
         }
         .cut-off {
             margin-top: 30px;
@@ -105,7 +112,7 @@
         }
         .certify{
             font-size: 7px;
-            margin-bottom: 50px;
+            margin-bottom: 70px;
             text-align: center;
         }
         .name {
@@ -289,29 +296,41 @@
         <div class="table-right">
             <table class="total-table">
                 <tr>
-                    <td class="bold">Length of Work :</td> <td>{{$lengthOfWork ?? 0.0}}</td>
-                    <td class="bold">Absences :</td> <td>0.0</td>
+                    <td class="bold">Length of Work :</td> <td>{{$lengthOfWork == 0 ? '0.0' : $lengthOfWork}}</td>
+                    <td class="bold">Absences :</td> <td>{{ $absence == 0 ? '0.0' : $absence }}</td>
                 </tr>
                 <tr>
                     <td class="bold">Special Holiday :</td> <td>0.0</td>
-                    <td class="bold">Day-Off :</td> <td>0.0</td>
+                    <td class="bold">Day-Off :</td> <td>{{ $dayOff == 0 ? '0.0' : $dayOff }}</td>
                 </tr>
                 <tr>
                     <td class="bold">Legal Holiday :</td> <td>0.0</td>
                     <td class="bold">Late Minutes :</td> <td>{{ $late == 0 ? '0.0' : $late }}</td>
                 </tr>
                 <tr>
-                    <td class="bold">Leave :</td> <td>0.0</td>
+                    <td class="bold">Leave :</td> <td>{{ $leave == 0 ? '0.0' : $leave }}</td>
                     <td class="bold">UT Minutes :</td> <td>{{ $undertime == 0 ? '0.0' : $undertime }}</td>
                 </tr>
+                <tr>
+                    <td></td><td></td>
+                    <td class="bold" style="font-size: 12px;">Total  :</td> <td>{{ $totalLateAndUndertimeandAbsence == 0 ? '0.0' : $totalLateAndUndertimeandAbsence }}</td>
+                </tr>
+
             </table>
         </div>
     </div>
 
     <div class="signature">
         <p class="certify">I certify that the entries in this record were made by myself daily at the time of arrival and departure from the office and are true and correct.</p>
-        <div>Employee’s Signature</div>
-        <div>Authorized Official</div>
+        <div>
+            @if($signature)
+                <img src="{{ $signature }}" alt="Employee Signature" style="max-width: 190px; max-height: 70px; position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); mix-blend-mode: multiply; -webkit-filter: grayscale(100%); filter: grayscale(100%);">
+            @endif
+            Employee's Signature
+        </div>
+        <div>
+            Authorized Official
+        </div>
     </div>
 </body>
 </html>

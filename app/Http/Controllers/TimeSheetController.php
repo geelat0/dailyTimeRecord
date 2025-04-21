@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\DataTables\TimeSheetDataTable;
+use App\Http\Requests\TimeEntryIDRequest;
 use App\Http\Requests\TimeEntryRequest;
+use App\Models\ApproveAttendance;
 use App\Models\AttendanceType;
 use App\Models\Shift;
 use App\Models\ShiftSchedule;
@@ -12,6 +14,7 @@ use Carbon\Carbon;
 use DateInterval;
 use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use OpenSpout\Common\Entity\Row;
 
@@ -304,21 +307,21 @@ class TimeSheetController extends Controller
                 }
             }
 
-            $timeEntry = TimeEntry::where('id', $request->id)->first();
-            
-
-          
-            $timeEntry = TimeEntry::updateOrCreate(
-                ['id' => $request->id],
-                [
-                    'date' => $request->date,
-                    'user_id' => 1,
-                    'am_time_in' => $amTimeIn ? $amTimeIn->format('Y-m-d H:i:s') : null,
-                    'am_time_out' => $amTimeOut ? $amTimeOut->format('Y-m-d H:i:s') : null,
-                    'pm_time_in' => $pmTimeIn ? $pmTimeIn->format('Y-m-d H:i:s') : null,
-                    'pm_time_out' => $pmTimeOut ? $pmTimeOut->format('Y-m-d H:i:s') : null,
-                ]
-            );
+            $timeEntry = TimeEntry::where('user_id', $request->user_id)->where('date', $request->date)->first();
+            if(!$timeEntry){
+                $timeEntry = new TimeEntry();
+                $timeEntry->user_id = $request->user_id;
+                $timeEntry->date = $request->date;
+                $timeEntry->am_time_in = $amTimeIn ? $amTimeIn->format('Y-m-d H:i:s') : null;
+                $timeEntry->am_time_out = $amTimeOut ? $amTimeOut->format('Y-m-d H:i:s') : null;
+                $timeEntry->pm_time_in = $pmTimeIn ? $pmTimeIn->format('Y-m-d H:i:s') : null;
+                $timeEntry->pm_time_out = $pmTimeOut ? $pmTimeOut->format('Y-m-d H:i:s') : null;
+            }else{
+                $timeEntry->am_time_in = $amTimeIn ? $amTimeIn->format('Y-m-d H:i:s') : null;
+                $timeEntry->am_time_out = $amTimeOut ? $amTimeOut->format('Y-m-d H:i:s') : null;
+                $timeEntry->pm_time_in = $pmTimeIn ? $pmTimeIn->format('Y-m-d H:i:s') : null;
+                $timeEntry->pm_time_out = $pmTimeOut ? $pmTimeOut->format('Y-m-d H:i:s') : null;
+            }
 
         $timeEntry->save();
 
@@ -331,6 +334,18 @@ class TimeSheetController extends Controller
             
             $this->computeTimes($timeEntry);
         }
+
+        $approvedAttendance = ApproveAttendance::where('user_id', $request->user_id)
+        ->where('start_date', '<=', $request->date)
+        ->where('end_date', '>=', $request->date)
+        ->first();
+
+        if($approvedAttendance){
+            $timeEntry->approved_attendance = $approvedAttendance->id;
+            $timeEntry->rendered_hours = $approvedAttendance->default_rendered_hours;
+            $timeEntry->save();
+        }
+
         return response()->json(
             [
                 'message' => 'Time entry updated successfully',
@@ -366,30 +381,11 @@ class TimeSheetController extends Controller
      * @param Request $request The HTTP request containing the time entry ID
      * @return JsonResponse Returns a JSON response with the requested time entry
      */
-    public function getTimeEntryByID(Request $request){
+    public function getTimeEntryByID(TimeEntryIDRequest $request){
         $timeEntry = TimeEntry::TimeEntriesByID($request->id);
         return response()->json(
             $timeEntry,
             200
         );
-    }
-
-    /**
-     * Compute the total rendered hours for a specific cutoff period
-     * This function calculates work hours between two cutoff dates
-     *
-     * @param Request $request The HTTP request object
-     * @return void Currently under development
-     */
-    public function computeRenderedHoursPerCutOff(Request $request){
-        $cutOffOne = 15;
-        $cutOffTwo = 31;
-        $renderedHours = 0;
-        $totalRenderedHours = 0;
-        $timeEntries = TimeEntry::TimeEntries();
-        $timeEntries = $timeEntries->sortBy('date');
-        dd($timeEntries);
-    
-
     }
 }

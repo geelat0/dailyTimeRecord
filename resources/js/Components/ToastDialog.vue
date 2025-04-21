@@ -11,6 +11,14 @@ import {
 } from '@/Components/ui/alert-dialog'
 import { Button } from '@/Components/ui/button'
 
+// Define the AlertMessage interface
+interface AlertMessage {
+  title: string;
+  description: string;
+  variant?: 'destructive' | 'success' | 'default';
+  errorCode?: string;
+}
+
 const emits = defineEmits<{
   (e: 'close', payload: boolean): void
 }>()
@@ -52,6 +60,11 @@ const buttonClass = computed(() => {
 // Computed property to split the description into lines by '\n'
 const descriptionLines = computed(() => {
   return props.message.description.split('\n')
+})
+
+// Add default export
+defineOptions({
+  name: 'ToastDialog'
 })
 </script>
 

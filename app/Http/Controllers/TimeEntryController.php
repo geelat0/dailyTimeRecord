@@ -6,6 +6,7 @@ use App\DataTables\TimeSheetDataTable;
 use App\Models\ShiftSchedule;
 use App\Models\TimeEntry;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 /**
@@ -28,7 +29,7 @@ class TimeEntryController extends Controller
             $timeEntry->date = now();
         }else{
             $timeEntry = New TimeEntry();
-            $timeEntry->user_id = 1;
+            $timeEntry->user_id = Auth::user()->id;
             $timeEntry->am_time_in = now();
             $timeEntry->date = now();
         }
@@ -60,7 +61,7 @@ class TimeEntryController extends Controller
             $timeEntry->date = now();
         } else {
             $timeEntry = new TimeEntry();
-            $timeEntry->user_id = 1;
+            $timeEntry->user_id = Auth::user()->id;
             $timeEntry->am_time_out = now();
             $timeEntry->date = now();
         }
@@ -94,7 +95,7 @@ class TimeEntryController extends Controller
             $timeEntry->date = now();
         } else {
             $timeEntry = new TimeEntry();
-            $timeEntry->user_id = 1;
+            $timeEntry->user_id = Auth::user()->id;
             $timeEntry->pm_time_in = now();
             $timeEntry->date = now();
         }
@@ -128,7 +129,7 @@ class TimeEntryController extends Controller
             $timeEntry->date = now();
         } else {
             $timeEntry = new TimeEntry();
-            $timeEntry->user_id = 1;
+            $timeEntry->user_id = Auth::user()->id;
             $timeEntry->pm_time_out = now();
             $timeEntry->date = now();
         }
