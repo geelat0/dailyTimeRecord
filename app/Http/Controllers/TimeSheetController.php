@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\DataTables\TimeSheetDataTable;
+use App\Http\Requests\TimeEntryIDRequest;
 use App\Http\Requests\TimeEntryRequest;
+use App\Models\ApproveAttendance;
 use App\Models\AttendanceType;
 use App\Models\Shift;
 use App\Models\ShiftSchedule;
@@ -12,11 +14,23 @@ use Carbon\Carbon;
 use DateInterval;
 use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use OpenSpout\Common\Entity\Row;
 
+/**
+ * TimeSheetController handles all time sheet related operations including
+ * time entry management, computation of work hours, and attendance tracking.
+ */
 class TimeSheetController extends Controller
 {
+    /**
+     * Display the time sheet index page or return JSON data for Vue components
+     *
+     * @param Request $request The HTTP request object
+     * @param TimeSheetDataTable $dataTable The data table instance for time sheet data
+     * @return \Inertia\Response|JsonResponse Returns either an Inertia response or JSON data
+     */
     public function index(Request $request, TimeSheetDataTable $dataTable)
     {
         if ($request->wantsJson()) {
@@ -27,6 +41,13 @@ class TimeSheetController extends Controller
         ]);
     }
 
+    /**
+     * Compute and process time-related calculations for a time entry
+     * This includes calculating late time, undertime, excess time, and rendered hours
+     *
+     * @param TimeEntry $timeEntry The time entry to compute times for
+     * @return array Returns an array containing computed time metrics
+     */
     public function computeTimes($timeEntry){
 
         $shift = null;
@@ -159,6 +180,8 @@ class TimeSheetController extends Controller
         }
         if ($flexibleSchedule) {
             $expectedTimeout = $actual1stHalfTimeIn ? (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M")) : (clone $expected2ndHalfTimeIn)->add(new DateInterval("PT" . (($totalRenderingMinutes / 2) - 30) . "M"));
+            // $expectedTimeout = (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M"));
+            // dd($expectedTimeout);
             if ($actual2ndHalfTimeOut && $actual2ndHalfTimeOut < $expectedTimeout) {
                 $interval2ndHalfUnder = $actual2ndHalfTimeOut->diff($expectedTimeout);
                 $secondHalfUnderTime = max(0, ($interval2ndHalfUnder->days * 24 * 60) + ($interval2ndHalfUnder->h * 60) + $interval2ndHalfUnder->i);
@@ -184,6 +207,7 @@ class TimeSheetController extends Controller
         // Calculate excess time beyond end time based on schedule type
         if ($flexibleSchedule) {
             $expectedTimeout = $actual1stHalfTimeIn ? (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M")) : (clone $expected2ndHalfTimeIn)->add(new DateInterval("PT" . (($totalRenderingMinutes / 2) - 30) . "M"));
+            // $expectedTimeout = (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M"));
 
             if ($actual2ndHalfTimeOut > $expectedTimeout) {
                 $intervalExcessTimeBeyondEndTime = $expectedTimeout->diff($actual2ndHalfTimeOut);
@@ -207,6 +231,7 @@ class TimeSheetController extends Controller
                 $adjusted1stHalfTimeIn = $expected1stHalfTimeIn;
             }
             $expectedTimeout = $actual1stHalfTimeIn ? (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M")) : (clone $expected2ndHalfTimeIn)->add(new DateInterval("PT" . (($totalRenderingMinutes / 2) - 30) . "M"));
+            // $expectedTimeout = (clone $actual1stHalfTimeIn)->add(new DateInterval("PT" . ($totalRenderingMinutes) . "M"));
             // $expectedTimeout = new DateTime($expectedTimeout);
             $firstHalfLength = $actual1stHalfTimeOut ? max(0, min($actual1stHalfTimeOut->getTimestamp(), $expected1stHalfTimeOut->getTimestamp()) - max($adjusted1stHalfTimeIn->getTimestamp(), $expected1stHalfTimeIn->getTimestamp())) / 60 : 0;
             $secondHalfLength = $actual2ndHalfTimeOut ? max(0, min($actual2ndHalfTimeOut->getTimestamp(), $expectedTimeout->getTimestamp()) - max($actual2ndHalfTimeIn->getTimestamp(), $expected2ndHalfTimeIn->getTimestamp())) / 60 : 0;
@@ -234,6 +259,12 @@ class TimeSheetController extends Controller
         ];
     }
  
+    /**
+     * Process and compute all time entries in the system
+     * This function iterates through all time entries and computes their time metrics
+     *
+     * @return JsonResponse Returns a JSON response containing all processed time entries
+     */
     public function computeTimeEntries()
     {
         $timeEntries = TimeEntry::TimeEntries();
@@ -248,6 +279,16 @@ class TimeSheetController extends Controller
         );
     }
 
+    /**
+     * Update an existing time entry or create a new one for login user
+     * 
+     * 
+     * Handles both AM and PM time entries with proper date handling
+     *
+     * @param TimeEntryRequest $request The validated request containing time entry data
+     * @return JsonResponse Returns a JSON response with the updated/created time entry
+     * @throws \Exception If an error occurs during the update process
+     */
     public function updateTimeEntry(TimeEntryRequest $request)
     {
 
@@ -265,20 +306,25 @@ class TimeSheetController extends Controller
                     $pmTimeOut->addDay();
                 }
             }
-          
-            $timeEntry = TimeEntry::updateOrCreate(
-                ['id' => $request->id],
-                [
-                    'date' => $request->date,
-                    'user_id' => 1,
-                    'am_time_in' => $amTimeIn ? $amTimeIn->format('Y-m-d H:i:s') : null,
-                    'am_time_out' => $amTimeOut ? $amTimeOut->format('Y-m-d H:i:s') : null,
-                    'pm_time_in' => $pmTimeIn ? $pmTimeIn->format('Y-m-d H:i:s') : null,
-                    'pm_time_out' => $pmTimeOut ? $pmTimeOut->format('Y-m-d H:i:s') : null,
-                ]
-            );
+
+            $timeEntry = TimeEntry::where('user_id', $request->user_id)->where('date', $request->date)->first();
+            if(!$timeEntry){
+                $timeEntry = new TimeEntry();
+                $timeEntry->user_id = $request->user_id;
+                $timeEntry->date = $request->date;
+                $timeEntry->am_time_in = $amTimeIn ? $amTimeIn->format('Y-m-d H:i:s') : null;
+                $timeEntry->am_time_out = $amTimeOut ? $amTimeOut->format('Y-m-d H:i:s') : null;
+                $timeEntry->pm_time_in = $pmTimeIn ? $pmTimeIn->format('Y-m-d H:i:s') : null;
+                $timeEntry->pm_time_out = $pmTimeOut ? $pmTimeOut->format('Y-m-d H:i:s') : null;
+            }else{
+                $timeEntry->am_time_in = $amTimeIn ? $amTimeIn->format('Y-m-d H:i:s') : null;
+                $timeEntry->am_time_out = $amTimeOut ? $amTimeOut->format('Y-m-d H:i:s') : null;
+                $timeEntry->pm_time_in = $pmTimeIn ? $pmTimeIn->format('Y-m-d H:i:s') : null;
+                $timeEntry->pm_time_out = $pmTimeOut ? $pmTimeOut->format('Y-m-d H:i:s') : null;
+            }
 
         $timeEntry->save();
+
         if($amTimeIn && $amTimeOut || $pmTimeIn && $pmTimeOut){
             $shiftSchedule = ShiftSchedule::getShiftSchedule($timeEntry->date, 1);
             if($shiftSchedule){
@@ -288,6 +334,18 @@ class TimeSheetController extends Controller
             
             $this->computeTimes($timeEntry);
         }
+
+        $approvedAttendance = ApproveAttendance::where('user_id', $request->user_id)
+        ->where('start_date', '<=', $request->date)
+        ->where('end_date', '>=', $request->date)
+        ->first();
+
+        if($approvedAttendance){
+            $timeEntry->approved_attendance = $approvedAttendance->id;
+            $timeEntry->rendered_hours = $approvedAttendance->default_rendered_hours;
+            $timeEntry->save();
+        }
+
         return response()->json(
             [
                 'message' => 'Time entry updated successfully',
@@ -306,29 +364,28 @@ class TimeSheetController extends Controller
         }
     }
 
+    /**
+     * Retrieve all available attendance types
+     *
+     * @return mixed Returns the list of attendance types
+     */
     public function getAttendanceType()
     {
         $attendanceType = AttendanceType::getAttendanceType();
         return $attendanceType;
     }
 
-    public function getTimeEntryByID(Request $request){
+    /**
+     * Get a specific time entry by its ID
+     *
+     * @param Request $request The HTTP request containing the time entry ID
+     * @return JsonResponse Returns a JSON response with the requested time entry
+     */
+    public function getTimeEntryByID(TimeEntryIDRequest $request){
         $timeEntry = TimeEntry::TimeEntriesByID($request->id);
         return response()->json(
             $timeEntry,
             200
         );
-    }
-
-    public function computeRenderedHoursPerCutOff(Request $request){
-        $cutOffOne = 15;
-        $cutOffTwo = 31;
-        $renderedHours = 0;
-        $totalRenderedHours = 0;
-        $timeEntries = TimeEntry::TimeEntries();
-        $timeEntries = $timeEntries->sortBy('date');
-        dd($timeEntries);
-    
-
     }
 }

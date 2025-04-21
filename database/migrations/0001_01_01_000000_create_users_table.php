@@ -13,13 +13,24 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->unsignedBigInteger('user_id');
+            $table->string('id_number');
+            $table->string('full_name');
+            $table->string('position');
+            $table->string('employment_status');
+            $table->string('official_station');
+            $table->longText('signature_url');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            
             $table->rememberToken();
             $table->foreignId('current_team_id')->nullable();
             $table->string('profile_photo_path', 2048)->nullable();
+
+            $table->longText('empowerex_token')->nullable();
+            $table->longText('empowerex_refresh_token')->nullable();
+            
             $table->timestamps();
         });
 

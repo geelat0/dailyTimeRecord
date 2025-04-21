@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('type');
             $table->string('code');
+            $table->time('default_rendered_hours')->nullable();
             $table->timestamps();
         });
     }

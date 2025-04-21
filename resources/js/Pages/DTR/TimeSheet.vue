@@ -5,6 +5,7 @@ import DateFilter from '@/Composable/DateFilter.vue'
 import EditTableModal from '@/Composable/EditTableModal.vue'
 import PageLoader from '@/Components/PageLoader.vue';
 import ViewFiles from '@/Composable/ViewFiles.vue';
+import DTRDialog from '@/Composable/DTRDialog.vue';
 
 import {
   Table,
@@ -32,21 +33,20 @@ const itemsPerPage = ref(31);
 const totalItems = ref(0);
 const isLoading = ref(false)
 const isMobile = useMediaQuery('(max-width: 768px)')
+const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1024px)')
+const user = ref(null);
 
 const fetchTimeEntries = async (dates = {}) => {
   isLoading.value = true; // Set loading to true before fetching
   await new Promise(resolve => setTimeout(resolve, 1000)); // Load for 3 seconds
     try {
-      const filterDates = Object.keys(dates).length ? dates : currentDateFilter.value;
+      const filterDates = Object.keys(dates).length ? dates : {
+        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+        endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0]
+      };
+      const response = await axios.get(`/api/time-entries/list/${filterDates.startDate}/${filterDates.endDate}`);
 
-        const response = await axios.get('/api/time-entries/list', {
-            params: {
-                start_date: dates.startDate,
-                end_date: dates.endDate
-            }
-        });
         timeEntries.value = response.data.data;
-        console.log(response.data.data);
         totalItems.value = response.data.data.length; 
     } catch (error) {
         console.error('Error fetching time entries:', error);
@@ -91,8 +91,14 @@ const handleDateChange = (dates) => {
     fetchTimeEntries(dates);
 }
 
+const fetchUser = async () => {
+  const response = await axios.get('/api/auth/user');
+  user.value = response.data;
+}
+
 onMounted(() => {
   fetchTimeEntries()
+  fetchUser();
 })
 
 </script>
@@ -101,9 +107,11 @@ onMounted(() => {
   <div class="flex flex-col gap-8">
     <Container class="flex flex-col gap-4" header-text="View Time Sheet">
       <template #header>
-        <div :class="['flex flex-col gap-4', { 'items-end': !isMobile, 'items-center': isMobile }]">
-          <DateFilter @date-change="handleDateChange"/>
+        <div :class="isMobile ? 'flex flex-col gap-4 items-center' : isTablet ? 'flex flex-col gap-4 items-start' : 'flex justify-between items-end'">
+            <DTRDialog class="w-full sm:w-auto"/>
+            <DateFilter class="w-full sm:w-auto" @date-change="handleDateChange"/>
         </div>
+       
         <div class="flex flex-col gap-2">
           <div class="table-container relative">
             <div v-if="isLoading" >
@@ -156,6 +164,7 @@ onMounted(() => {
                                   am_time_out: entry.am_time_out,
                                   pm_time_in: entry.pm_time_in,
                                   pm_time_out: entry.pm_time_out,
+                                  user_id: user.id
                                   }"
                         @update="fetchTimeEntries"
                       />

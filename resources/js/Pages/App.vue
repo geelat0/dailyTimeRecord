@@ -14,29 +14,37 @@ import { RouterView } from 'vue-router'
 import NavMenu from '@/Components/NavMenu.vue';
 
 const loadingTime = ref(true)
+const user = ref(null)
 const isMobile = useMediaQuery('(max-width: 768px)')
 const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1024px)')
-onMounted(() => {
-  setTimeout(() => {
-    loadingTime.value = false
-  }, 3000)
+onMounted(async () => {
+  try {
+    const response = await axios.get('/api/auth/user');
+    user.value = response.data;
+    console.log('Authenticated user:', response.data);
+  } catch (error) {
+    console.error('Failed to fetch authenticated user:', error);
+  } finally {
+    loadingTime.value = false;
+  }
 })
 
 </script>
 
 <template>
   <FadeTransition>
-    <!-- <Loader  v-if="loadingTime" /> -->
-    <div
+    <Loader v-if="loadingTime" />
+    <div v-if="user?.email"
       class="bg-support relative flex min-h-screen flex-col items-center gap-4 overflow-hidden p-4 dark:text-white"
     >
       <!-- <ToastDialog /> -->
+       
       <Card
         class="text-card-foreground rounded-lg border bg-background flex w-full items-center justify-between border-none px-6 py-4 shadow-none md:mb-0"
       >
         <WordLogo />
         <div class="flex items-center gap-4">
-          <AvatarPopover />
+          <!-- <AvatarPopover /> -->
         </div>
       </Card>
       <div v-if="isMobile || isTablet" class="w-full">

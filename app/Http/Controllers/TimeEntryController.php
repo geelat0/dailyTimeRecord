@@ -6,10 +6,21 @@ use App\DataTables\TimeSheetDataTable;
 use App\Models\ShiftSchedule;
 use App\Models\TimeEntry;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
+/**
+ * Controller for handling time entry operations
+ */
 class TimeEntryController extends Controller
 {
+    /**
+     * Updates the morning time-in entry for the current user
+     * Creates a new time entry if none exists for the current date
+     * 
+     * @param Request $request The HTTP request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function updateTimeIn(Request $request)
     {
         $timeEntry = TimeEntry::getTimeEntries();
@@ -18,7 +29,7 @@ class TimeEntryController extends Controller
             $timeEntry->date = now();
         }else{
             $timeEntry = New TimeEntry();
-            $timeEntry->user_id = 1;
+            $timeEntry->user_id = Auth::user()->id;
             $timeEntry->am_time_in = now();
             $timeEntry->date = now();
         }
@@ -36,11 +47,24 @@ class TimeEntryController extends Controller
         );
     }
 
+    /**
+     * Updates the morning time-out entry for a specific time entry
+     * 
+     * @param Request $request The HTTP request containing the time entry ID
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function updateTimeOut(Request $request)
     {
-        $timeEntry = TimeEntry::find($request->id);
-        $timeEntry->am_time_out = now();
-        $timeEntry->date = now();
+        $timeEntry = TimeEntry::getTimeEntries();
+        if ($timeEntry) {
+            $timeEntry->am_time_out = now();
+            $timeEntry->date = now();
+        } else {
+            $timeEntry = new TimeEntry();
+            $timeEntry->user_id = Auth::user()->id;
+            $timeEntry->am_time_out = now();
+            $timeEntry->date = now();
+        }
         $timeEntry->save();
         $shiftSchedule = ShiftSchedule::getShiftSchedule($timeEntry->date, 1);
         if($shiftSchedule){
@@ -56,6 +80,13 @@ class TimeEntryController extends Controller
         );
     }
 
+    /**
+     * Updates the afternoon time-in entry for the current user
+     * Creates a new time entry if none exists for the current date
+     * 
+     * @param Request $request The HTTP request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function updateTimeInPM(Request $request)
     {
         $timeEntry = TimeEntry::getTimeEntries();
@@ -64,7 +95,7 @@ class TimeEntryController extends Controller
             $timeEntry->date = now();
         } else {
             $timeEntry = new TimeEntry();
-            $timeEntry->user_id = 1;
+            $timeEntry->user_id = Auth::user()->id;
             $timeEntry->pm_time_in = now();
             $timeEntry->date = now();
         }
@@ -84,11 +115,24 @@ class TimeEntryController extends Controller
         );
     }
 
+    /**
+     * Updates the afternoon time-out entry for a specific time entry
+     * 
+     * @param Request $request The HTTP request containing the time entry ID
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function updateTimeOutPM(Request $request)
     {
-        $timeEntry = TimeEntry::find($request->id);
-        $timeEntry->pm_time_out = now();
-        $timeEntry->date = now();
+        $timeEntry = TimeEntry::getTimeEntries();
+        if ($timeEntry) {
+            $timeEntry->pm_time_out = now();
+            $timeEntry->date = now();
+        } else {
+            $timeEntry = new TimeEntry();
+            $timeEntry->user_id = Auth::user()->id;
+            $timeEntry->pm_time_out = now();
+            $timeEntry->date = now();
+        }
         $timeEntry->save();
 
         $shiftSchedule = ShiftSchedule::getShiftSchedule($timeEntry->date, 1);
@@ -106,6 +150,11 @@ class TimeEntryController extends Controller
         );
     } 
 
+    /**
+     * Retrieves today's time entries for the current user
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getUserTimeEntries()
     {
         $timeEntries = TimeEntry::getTimeEntries();

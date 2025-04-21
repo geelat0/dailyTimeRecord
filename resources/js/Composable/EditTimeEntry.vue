@@ -1,5 +1,6 @@
 <script setup lang="ts" >
 import { ref, onMounted, watch} from 'vue'
+import axios from 'axios'
 
 import { Button } from '@/Components/ui/button'
 import {
@@ -47,6 +48,7 @@ const props = defineProps({
 const emit = defineEmits(['time-entry-updated'])
 const isSubmitting = ref(false)
 const isFetching = ref(false)
+const user = ref(null)
 
 const formSchema = toTypedSchema(z.object({
   amTimeIn: z.string().optional(),
@@ -65,11 +67,30 @@ const formValues = ref({
   pmTimeOut: ''
 })
 
+const fetchUserData = async () => {
+  try {
+    const response = await axios.get('/api/auth/user')
+    user.value = response.data
+ } catch (error) {
+    alertMessage.value.title = 'Error'
+    alertMessage.value.description = error.response?.data?.message || "Failed to fetch user data"
+    alertMessage.value.variant = 'destructive'
+    openAlert.value = true
+    isOpen.value = false
+    console.error('Error fetching user data:', error)
+  }
+}
+
+onMounted(() => {
+  fetchUserData();
+})
+
 const onSubmit = async (values) => {
   isSubmitting.value = true
   try {
     const response = await axios.post('/api/time-entries/update', {
       id: formValues.value.timeEntryID,
+      user_id: user.value.id,
       date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
       am_time_in: formValues.value.amTimeIn,
       am_time_out: formValues.value.amTimeOut,
@@ -92,6 +113,7 @@ const onSubmit = async (values) => {
     alertMessage.value.description = error.response?.data?.message || "Failed to update time entry"
     alertMessage.value.variant = 'destructive'
     openAlert.value = true
+    isOpen.value = false
   } finally {
     isSubmitting.value = false
   }
@@ -114,7 +136,13 @@ const getTimeEntries = async () => {
       formValues.value = { ...newData }
     }
   } catch (error) {
+    alertMessage.value.title = 'Error'
+    alertMessage.value.description = error.response?.data?.message || "Failed to fetch time entries"
+    alertMessage.value.variant = 'destructive'
+    openAlert.value = true
+    isOpen.value = false
     console.error('Error fetching time entries:', error)
+
   } finally {
     isFetching.value = false
   }
@@ -126,6 +154,7 @@ watch(() => props.shouldRefresh, async () => {
 
 onMounted(() => {
   getTimeEntries()
+  fetchUserData()
 })
 </script>
 

@@ -25,7 +25,7 @@
             margin: 2px;
         }
         .legend {
-            font-size: 9px;
+            font-size: 10px;
             text-align: left;
             width: 35%;
         }
@@ -37,6 +37,8 @@
             display: flex;
             justify-content: space-between;
             margin-left: 20px;
+            font-size: 10px;
+
         }
         .items-left, .items-right {
             width: 48%; /* Adjust width to fit both columns */
@@ -46,8 +48,9 @@
         }
         .note {
             margin-top: 10px;
-            font-size: 8px;
             margin-left: 20px;
+            font-size: 10px;
+
 
         }
         .info {
@@ -66,9 +69,17 @@
             font-size: 9px;
         }
         th, td {
-            border: 1px solid black;
+            border: 0.1px solid black;
             padding: 4px;
             text-align: center;
+            font-weight: normal;
+        }
+
+        th {
+            font-size: 10px;
+        }
+        td {
+            font-size: 7px;
         }
         .signature {
             position: absolute;
@@ -83,28 +94,80 @@
             display: inline-block;
             width: 40%;
             text-align: center;
-            margin-top: 10px;
+            margin: 0 2%;
+            font-size: 10px;
+            position: relative;
+        }
+        .signature div::before {
+            content: '';
+            position: absolute;
+            top: -25px;
+            left: 0;
+            width: 100%;
             border-top: 1px solid black;
-            margin-right: 2%; /* Add space between the two divs */
         }
         .cut-off {
             margin-top: 30px;
             font-size: 12px;
         }
         .certify{
-            font-size: 10px;
-            margin-bottom: 50px;
+            font-size: 7px;
+            margin-bottom: 70px;
             text-align: center;
         }
         .name {
             font-weight: bold;
             font-size: 18px;
         }
+
+        .total-header {
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 2px;
+            font-size: 14px;
+
+        }
+        .table-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-top: 5px;
+        }
+        .table-left, .table-right {
+            width: 48%;
+        }
+
+        .total-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        /* .total-table td th{
+            padding: 5px;
+            text-align: left;
+            font-size: 12px;
+            border:none;
+        } */
+
+        .total-table td {
+          border:none;
+          font-size: 10px;
+          text-align: right;
+
+
+        }
+        .bold {
+            font-weight: bold;
+        }
+        .info_title{
+            font-weight: normal;
+            text-decoration: underline
+        }
     </style>
 </head>
 <body>
     <div style="text-align: right; font-size: 10px; margin-bottom: 10px;">
-        <p><b>Date Printed:</b> {{ \Carbon\Carbon::now()->format('m/d/Y') }}</p>
+        <p>Date Printed: {{ \Carbon\Carbon::now()->format('m/d/Y') }}</p>
     </div>
     <div class="header-legend-container">
         <div class="header">
@@ -120,8 +183,8 @@
             </div>
 
             <div class="info">
-                <p>Employee No.: <b>{{ $employee_no }}</b></p>
-                <p>Name: <b class="name">{{ $name }}</b></p>
+                <p> <b class="info_title">Employee No.:</b> <b> {{ $employee_no }}</b></p>
+                <p><b class="info_title">Name :</b> <b class="name">{{ $name }}</b></p>
             </div>
         </div>
 
@@ -161,7 +224,7 @@
                 <th rowspan="2">OT</th>
                 <th rowspan="2">UT</th>
                 <th rowspan="2">LT</th>
-                <th rowspan="2">Short Break</th>
+                <th rowspan="2" style="width: 6%;">Short Break LT</th>
                 <th colspan="2">ND</th>
                 <th colspan="2">Others</th>
             </tr>
@@ -203,12 +266,71 @@
         </tbody>
     </table>
 
-  
+    <div class="total-header">T O T A L</div>
+    <div class="table-container">
+        <div class="table-left">
+            <table class="total-table">
+                <tr class="bold">
+                    <td></td><td>REG</td>
+                    <td>OFF</td> <td>SHP</td> <td>LHP</td> <td>SHP/OFF</td> <td>LHP/OFF</td>
+                </tr>
+                <tr>
+                    <td class="bold">LOW :</td> <td>0.00</td>
+                    <td>0.00</td> <td>0.00</td> <td>0.00</td> <td>0.00</td> <td>0.00</td>
+                </tr>
+                <tr>
+                    <td class="bold">OT :</td> <td>0.00</td>
+                    <td>0.00</td> <td>0.00</td> <td>0.00</td> <td>0.00</td> <td>0.00</td>
+                </tr>
+                <tr>
+                    <td class="bold">ND :</td> <td>0.00</td>
+                    <td>0.00</td> <td>0.00</td> <td>0.00</td> <td>0.00</td> <td>0.00</td>
+                </tr>
+                <tr>
+                    <td class="bold">OT ND :</td> <td>0.00</td>
+                    <td>0.00</td> <td>0.00</td> <td>0.00</td> <td>0.00</td> <td>0.00</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="table-right">
+            <table class="total-table">
+                <tr>
+                    <td class="bold">Length of Work :</td> <td>{{$lengthOfWork == 0 ? '0.0' : $lengthOfWork}}</td>
+                    <td class="bold">Absences :</td> <td>{{ $absence == 0 ? '0.0' : $absence }}</td>
+                </tr>
+                <tr>
+                    <td class="bold">Special Holiday :</td> <td>0.0</td>
+                    <td class="bold">Day-Off :</td> <td>{{ $dayOff == 0 ? '0.0' : $dayOff }}</td>
+                </tr>
+                <tr>
+                    <td class="bold">Legal Holiday :</td> <td>0.0</td>
+                    <td class="bold">Late Minutes :</td> <td>{{ $late == 0 ? '0.0' : $late }}</td>
+                </tr>
+                <tr>
+                    <td class="bold">Leave :</td> <td>{{ $leave == 0 ? '0.0' : $leave }}</td>
+                    <td class="bold">UT Minutes :</td> <td>{{ $undertime == 0 ? '0.0' : $undertime }}</td>
+                </tr>
+                <tr>
+                    <td></td><td></td>
+                    <td class="bold" style="font-size: 12px;">Total  :</td> <td>{{ $totalLateAndUndertimeandAbsence == 0 ? '0.0' : $totalLateAndUndertimeandAbsence }}</td>
+                </tr>
+
+            </table>
+        </div>
+    </div>
 
     <div class="signature">
         <p class="certify">I certify that the entries in this record were made by myself daily at the time of arrival and departure from the office and are true and correct.</p>
-        <div>Employee’s Signature</div>
-        <div>Authorized Official</div>
+        <div>
+            @if($signature)
+                <img src="{{ $signature }}" alt="Employee Signature" style="max-width: 190px; max-height: 70px; position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); mix-blend-mode: multiply; -webkit-filter: grayscale(100%); filter: grayscale(100%);">
+            @endif
+            Employee's Signature
+        </div>
+        <div>
+            Authorized Official
+        </div>
     </div>
 </body>
 </html>

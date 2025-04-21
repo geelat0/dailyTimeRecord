@@ -1,9 +1,9 @@
-  
 <script setup>
 import { onMounted, ref, computed } from 'vue'
 import Container from '@/Components/Container.vue'; 
 import EditTimeEntry from '@/Composable/EditTimeEntry.vue'
 import PageLoader from '@/Components/PageLoader.vue';
+import GreetingCard from '@/Components/GreetingCard.vue';
 import { useMediaQuery } from '@vueuse/core'
 
 const currentTime = ref('')
@@ -139,6 +139,9 @@ const getTimeEntries = async () => {
 
         if (response.data.pm_time_in) {
 
+            document.getElementById('btn-time-out').classList.add('hidden')
+            document.getElementById('btn-time-in').classList.add('hidden')
+
             document.getElementById('tn-time-in-pm').disabled = true;
             document.getElementById('tn-time-in-pm').classList.add('hidden')
             document.getElementById('btn-time-out-pm').classList.remove('hidden')
@@ -147,6 +150,9 @@ const getTimeEntries = async () => {
         document.getElementById('pm_time_out').textContent = modifyTime(response.data.pm_time_out)
 
         if (response.data.pm_time_out) {
+            document.getElementById('btn-time-out').classList.add('hidden')
+            document.getElementById('btn-time-in').classList.add('hidden')
+            document.getElementById('tn-time-in-pm').classList.add('hidden')
             document.getElementById('btn-time-out-pm').classList.add('hidden')
         }
 
@@ -169,73 +175,107 @@ onMounted(() => {
 
 <template>
     <div class="flex flex-col gap-8">
-        <Container class="flex flex-col gap-4 " header-text="Add Time Entry">
+        <Container class="flex flex-col gap-4 ">
             <template #header>
-                <div class="text-center mb-2">
-                  <h1 :class="isMobile ? 'text-6xl' : 'text-8xl'" class="font-bold text-orange-500" id="clock">{{ currentTime }}</h1>
-                  <p class="text-xl text-black-600 mt-2" id="date">{{ currentDate }}</p>
-                </div>    </template>
+              <div class="w-full sm:w-auto">
+                        <GreetingCard />
+                    </div>
+                <div class="flex flex-col items-center mb-8">
+                    <div class="text-center">
+                        <h1 :class="isMobile ? 'text-6xl' : 'text-8xl'" class="font-bold bg-gradient-to-r from-orange-500 to-orange-600 text-transparent bg-clip-text" id="clock">{{ currentTime }}</h1>
+                        <p class="text-xl text-gray-600 mt-2 font-medium" id="date">{{ currentDate }}</p>
+                    </div>
+                </div>
+            </template>
 
             <!-- Time Buttons -->
-            <div class="flex gap-4 justify-center relative">
-              <div v-if="isLoading" >
+            <div class="flex flex-wrap gap-4 justify-center relative mb-8">
+              <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm">
                   <PageLoader />
-                </div>
-                <button @click="handleTimeIn" 
-                        :disabled="isLoading"
-                        class="px-16 py-6 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-xl" id="btn-time-in">
-                         AM Time In
-                </button>
-                <button @click="handleTimeOut" 
-                        :disabled="isLoading"
-                        class="px-16 py-6 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xl hidden" id="btn-time-out">
-                        AM Time Out
-                </button>
-                <button @click="handleTimeInPM" 
-                        :disabled="isLoading"
-
-                        class="px-16 py-6 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors text-xl hidden" id="tn-time-in-pm">
-                        PM Time In
-                </button>
-                <button @click="handleTimeOutPM" 
-                        :disabled="isLoading"
-                        class="px-16 py-6 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-xl hidden" id="btn-time-out-pm">
-                        PM Time Out
-                </button>
-                
-
+              </div>
+              <button @click="handleTimeIn" 
+                      :disabled="isLoading"
+                      class="min-w-[200px] px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-orange-500/30 disabled:opacity-50 text-lg font-semibold" 
+                      id="btn-time-in">
+                      <i class="fas fa-sign-in-alt mr-2"></i> AM Time In
+              </button>
+              <button @click="handleTimeOut" 
+                      :disabled="isLoading"
+                      class="min-w-[200px] px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all shadow-lg hover:shadow-red-500/30 disabled:opacity-50 text-lg font-semibold hidden" 
+                      id="btn-time-out">
+                      <i class="fas fa-sign-out-alt mr-2"></i> AM Time Out
+              </button>
+              <button @click="handleTimeInPM" 
+                      :disabled="isLoading"
+                      class="min-w-[200px] px-8 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-xl hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-lg hover:shadow-yellow-500/30 disabled:opacity-50 text-lg font-semibold hidden" 
+                      id="tn-time-in-pm">
+                      <i class="fas fa-sun mr-2"></i> PM Time In
+              </button>
+              <button @click="handleTimeOutPM" 
+                      :disabled="isLoading"
+                      class="min-w-[200px] px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-orange-500/30 disabled:opacity-50 text-lg font-semibold hidden" 
+                      id="btn-time-out-pm">
+                      <i class="fas fa-moon mr-2"></i> PM Time Out
+              </button>
             </div>
 
-          
-            <div class="w-full max-w-8xl p-4 sm:p-10 flex justify-between items-center">
-                <h2 class="text-gray-700 text-lg sm:text-xl mb-2 dark:text-white">Today's Record </h2>
+            <div class="w-full max-w-8xl px-4 sm:px-10 flex justify-between items-center mb-6">
+                <h2 class="text-gray-700 text-xl sm:text-2xl font-bold dark:text-white">Today's Record</h2>
                 <EditTimeEntry @time-entry-updated="getTimeEntries"
                 :should-refresh="refreshEditModal" />
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 dark:bg-dark-background">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 p-4 sm:p-6 dark:bg-dark-background">
                 <!-- AM Time In -->
-                <div class="bg-background rounded-lg p-4 sm:p-8 shadow-md">
-                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2 dark:text-white" id="am_time_in">00:00 --</div>
-                    <div class="text-gray-600 dark:text-white">AM Time-In</div>
+                <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
+                    <div class="flex items-center mb-4">
+                        <div class="p-3 bg-orange-100 rounded-lg mr-4">
+                            <i class="fas fa-sun text-orange-500 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-3xl sm:text-4xl font-bold text-gray-800 mb-1 dark:text-white tracking-wide" id="am_time_in">00:00 --</div>
+                            <div class="text-gray-500 dark:text-gray-400 font-medium">AM Time-In</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- AM Time Out -->
-                <div class="bg-background rounded-lg p-4 sm:p-8 shadow-md dark:bg-dark-background">
-                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2 dark:text-white" id="am_time_out">00:00 --</div>
-                    <div class="text-gray-600 dark:text-white">AM Time-Out</div>
+                <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
+                    <div class="flex items-center mb-4">
+                        <div class="p-3 bg-red-100 rounded-lg mr-4">
+                            <i class="fas fa-sign-out-alt text-red-500 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-3xl sm:text-4xl font-bold text-gray-800 mb-1 dark:text-white tracking-wide" id="am_time_out">00:00 --</div>
+                            <div class="text-gray-500 dark:text-gray-400 font-medium">AM Time-Out</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- PM Time In -->
-                <div class="bg-background rounded-lg p-4 sm:p-8 shadow-md dark:bg-dark-background">
-                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2 dark:text-white" id="pm_time_in">00:00 --</div>
-                    <div class="text-gray-600 dark:text-white">PM Time-In</div>
+                <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
+                    <div class="flex items-center mb-4">
+                        <div class="p-3 bg-yellow-100 rounded-lg mr-4">
+                            <i class="fas fa-sun text-yellow-500 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-3xl sm:text-4xl font-bold text-gray-800 mb-1 dark:text-white tracking-wide" id="pm_time_in">00:00 --</div>
+                            <div class="text-gray-500 dark:text-gray-400 font-medium">PM Time-In</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- PM Time Out -->
-                <div class="bg-background rounded-lg p-4 sm:p-8 shadow-md dark:bg-dark-background">
-                    <div class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-2 dark:text-white" id="pm_time_out">00:00 --</div>
-                    <div class="text-gray-600 dark:text-white">PM Time-Out</div>
+                <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
+                    <div class="flex items-center mb-4">
+                        <div class="p-3 bg-orange-100 rounded-lg mr-4">
+                            <i class="fas fa-moon text-orange-500 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-3xl sm:text-4xl font-bold text-gray-800 mb-1 dark:text-white tracking-wide" id="pm_time_out">00:00 --</div>
+                            <div class="text-gray-500 dark:text-gray-400 font-medium">PM Time-Out</div>
+                        </div>
+                    </div>
                 </div>
             </div>  
         </Container>

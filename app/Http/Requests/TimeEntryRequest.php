@@ -9,10 +9,10 @@ class TimeEntryRequest extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      */
-    // public function authorize(): bool
-    // {
-    //     return false;
-    // }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -22,6 +22,7 @@ class TimeEntryRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'user_id' => 'required',
             'date' => 'required',
             'am_time_in' => 'nullable',
             'am_time_out' => 'nullable',

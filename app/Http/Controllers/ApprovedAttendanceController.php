@@ -5,15 +5,26 @@ namespace App\Http\Controllers;
 use App\DataTables\AttachmentsDataTable;
 use App\Http\Requests\ApprovedAttendanceRequest;
 use App\Models\ApproveAttendance;
+use App\Models\AttendanceType;
 use App\Models\TimeEntry;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-
+/**
+ * Controller for managing approved attendance records and file attachments.
+ * Handles operations related to attendance approval, file uploads, and downloads.
+ */
 class ApprovedAttendanceController extends Controller
 {
+    /**
+     * Display a listing of approved attendance records.
+     * 
+     * @param Request $request The HTTP request instance
+     * @param AttachmentsDataTable $dataTable The data table instance for attachments
+     * @return \Inertia\Response|array Returns either an Inertia response or JSON data
+     */
     public function index(Request $request, AttachmentsDataTable $dataTable)
     {
         if ($request->wantsJson()) {
@@ -25,7 +36,11 @@ class ApprovedAttendanceController extends Controller
     }
 
     /**
-     * Store a newly created attendance in storage.
+     * Store a newly created attendance record in storage.
+     * Handles file uploads, date range processing, and attendance approval.
+     * 
+     * @param ApprovedAttendanceRequest $request The validated request containing attendance data
+     * @return \Illuminate\Http\JsonResponse Returns a JSON response with success/error message
      */
     public function store(ApprovedAttendanceRequest $request)
     { 
@@ -37,7 +52,6 @@ class ApprovedAttendanceController extends Controller
             $files = $request->file('file');
             $attendances = [];
 
-    
             foreach ($startDates as $index => $startDate) {
                 $endDate = $endDates[$index];
 
@@ -140,6 +154,7 @@ class ApprovedAttendanceController extends Controller
                     }
                     
                     $existingAttendance->files = json_encode($finalFileDetails);
+                    $existingAttendance->attendance_type = $validated['attendance_type'];
                     $existingAttendance->remarks = $validated['remarks'];
                     $existingAttendance->save();
                     $attendance = $existingAttendance;
@@ -156,10 +171,12 @@ class ApprovedAttendanceController extends Controller
                 }
                 $attendance->save();
 
+                $attendance_type = AttendanceType::where('id', $validated['attendance_type'])->first();
+
                 // Update time entries with the approved attendance ID
                 TimeEntry::whereBetween('date', [$startDate, $endDates[$index]])
                 ->where('user_id', $validated['user_id'])
-                ->update(['approved_attendance' => $attendance->id]);
+                ->update(['approved_attendance' => $attendance->id, 'rendered_hours' => $attendance_type->default_rendered_hours]);
     
                 $attendances[] = $attendance;
 
@@ -186,8 +203,17 @@ class ApprovedAttendanceController extends Controller
 
     }
 
+    /**
+     * Download an attachment file from S3 storage.
+     * 
+     * @param string $filename The name of the file to download
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse Returns the file download response
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException If file doesn't exist
+     */
     public function download($filename)
     {
+        $token = request()->bearerToken();
+
         $extension = pathinfo($filename, PATHINFO_EXTENSION);
         if (in_array(strtolower($extension), ['jpeg', 'jpg', 'png'])) {
             $path = 'uploads/' . $filename;
@@ -199,7 +225,14 @@ class ApprovedAttendanceController extends Controller
             abort(404);
         }
 
-        return Storage::disk('s3')->download($path);
+        $headers = [
+            'Content-Type' => Storage::disk('s3')->mimeType($path),
+            'Content-Disposition' => 'inline; filename="' . basename($path) . '"'
+        ];
+
+
+
+        return Storage::disk('s3')->response($path, null, $headers);
     }
 
 }

@@ -67,6 +67,17 @@ const errors = ref({})
 
 const router = useRouter()
 
+const user = ref(null)
+
+const fetchUserData = async () => {
+  try {
+    const response = await axios.get('/api/auth/user')
+    user.value = response.data
+  } catch (error) {
+    console.error('Error fetching user data:', error)
+  }
+}
+
 const handleSubmit = async () => {
   isLoading.value = true
   errors.value = {} // Reset errors
@@ -74,7 +85,7 @@ const handleSubmit = async () => {
     const formData = new FormData()
     formData.append('attendance_type', attendanceType.value)
     formData.append('remarks', remarks.value)
-    formData.append('user_id', 1)
+    formData.append('user_id', user.value.id)
     dateRanges.value.forEach((range, index) => {
       formData.append(`start_date[${index}]`, range.startDate)
       formData.append(`end_date[${index}]`, range.endDate)
@@ -133,6 +144,7 @@ const fetchAttendanceTypes = async () => {
 }
 
 onMounted(() => {
+  fetchUserData()
   fetchAttendanceTypes()
 })
 

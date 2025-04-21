@@ -195,8 +195,7 @@ class TimeSheetDataTable extends DataTable
     {
         $startDate = request('start_date');
         $endDate = request('end_date');
-        $user_id = 1;
-
+        $user_id = Auth::user()->id;
 
         if (!$startDate || !$endDate) {
             $startDate = now()->startOfMonth()->format('Y-m-d');
@@ -217,23 +216,23 @@ class TimeSheetDataTable extends DataTable
         $tempDatesQuery = implode(' UNION ALL SELECT ', array_map(function($date) {
             return "'{$date['day']}' as day, '{$date['date']}' as date";
         }, $dates));
-        
 
         $query = $model->newQuery()
             ->select('time_entries.*', 'temp_dates.day as temp_day', 'temp_dates.date as temp_date', 'approved_attendance.files', 'approved_attendance.attendance_type')
             ->from(DB::raw("(SELECT $tempDatesQuery) as temp_dates"))
             ->leftJoin('time_entries', function ($join) use($user_id) {
-            $join->on(DB::raw('DATE(time_entries.date)'), '=', 'temp_dates.date')
-                 ->where('time_entries.user_id', $user_id);
+                $join->on(DB::raw('DATE(time_entries.date)'), '=', 'temp_dates.date')
+                     ->where('time_entries.user_id', $user_id);
             })
             ->leftJoin('approved_attendance', function ($join) use($user_id) {
-            $join->on(DB::raw('DATE_FORMAT(temp_dates.date, "%Y-%m-%d")'), '>=', 'approved_attendance.start_date')
-                 ->on(DB::raw('DATE_FORMAT(temp_dates.date, "%Y-%m-%d")'), '<=', 'approved_attendance.end_date')
-                 ->where('approved_attendance.user_id', $user_id);
+                $join->on(DB::raw('DATE_FORMAT(temp_dates.date, "%Y-%m-%d")'), '>=', 'approved_attendance.start_date')
+                     ->on(DB::raw('DATE_FORMAT(temp_dates.date, "%Y-%m-%d")'), '<=', 'approved_attendance.end_date')
+                     ->where('approved_attendance.user_id', $user_id);
             })
-            ->whereBetween('temp_dates.date', [$startDate, $endDate]);
-            return $query;
+            ->whereBetween('temp_dates.date', [$startDate, $endDate])
+            ->orderBy('temp_dates.date', 'asc');
 
+        return $query;
     }
 
     /**

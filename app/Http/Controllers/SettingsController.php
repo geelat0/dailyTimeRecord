@@ -10,9 +10,20 @@ use Inertia\Inertia;
 use App\Http\Requests\ShiftScheduleRequest;
 use App\Models\TimeEntry;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
+/**
+ * SettingsController handles all settings-related operations for the DTR system.
+ */
 class SettingsController extends Controller
 {
+    /**
+     * Display the settings page or return JSON data for DataTable.
+     *
+     * @param Request $request The HTTP request
+     * @param SettingDataTable $dataTable The DataTable instance
+     * @return \Inertia\Response|array Returns either an Inertia response or JSON data
+     */
     public function index(Request $request, SettingDataTable $dataTable)
     {
         if ($request->wantsJson()) {
@@ -23,11 +34,24 @@ class SettingsController extends Controller
         ]);
     }
 
+    /**
+     * Retrieve all shift schedules except custom schedules.
+     *
+     * @return \Illuminate\Http\JsonResponse Returns JSON response containing shift schedules
+     */
     public function getShift(){
         $shiftSchedules = Shift::where('shift_name', '!=', 'Custom Schedule')->get();
         return response()->json($shiftSchedules);
     }
     
+    /**
+     * Recompute shift schedules and time entries for a specific date range and user.
+     *
+     * @param string $startDate The start date for recomputation
+     * @param string $endDate The end date for recomputation
+     * @param int $user_id The ID of the user
+     * @return void
+     */
     function reComputeShiftSchedule($startDate, $endDate, $user_id){
 
         // dd($startDate, $endDate, $user_id);
@@ -55,6 +79,12 @@ class SettingsController extends Controller
         }
     }
 
+    /**
+     * Store a new shift schedule request.
+     *
+     * @param ShiftScheduleRequest $request The validated request containing shift schedule details
+     * @return \Illuminate\Http\JsonResponse Returns success or error response
+     */
     public function store(ShiftScheduleRequest $request)
     {
         try {
@@ -77,7 +107,7 @@ class SettingsController extends Controller
 
             $existingShiftSchedule = ShiftSchedule::where('start_date', $validated['start_date'])
                 ->orWhere('end_date', $validated['end_date'])
-                ->where('user_id', 1)
+                ->where('user_id', Auth::user()->id)
                 ->first();
             
 
@@ -114,6 +144,12 @@ class SettingsController extends Controller
     }
 
 
+    /**
+     * Update an existing shift schedule.
+     *
+     * @param Request $request The HTTP request containing update details
+     * @return \Illuminate\Http\JsonResponse Returns success or error response
+     */
     public function update(Request $request){
 
         $shiftSchedule = ShiftSchedule::find($request->id);
