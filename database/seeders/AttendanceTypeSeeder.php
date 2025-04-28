@@ -29,6 +29,8 @@ class AttendanceTypeSeeder extends Seeder
             ['type' => 'Work From Home', 'code' => 'WFH', 'default_rendered_hours' => '08:00:00'],
             ['type' => 'Work Suspension', 'code' => 'WS', 'default_rendered_hours' => '00:00:00'],
             ['type' => 'Weekend/Day off', 'code' => 'WDO', 'default_rendered_hours' => '00:00:00'],
+            ['type' => 'Wellness Day', 'code' => 'WD', 'default_rendered_hours' => '08:00:00'],
+
 
         ];
 

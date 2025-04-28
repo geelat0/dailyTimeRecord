@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Aws\S3\S3Client;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\DB;
 
 class PDFController extends Controller
 {
@@ -131,7 +132,7 @@ class PDFController extends Controller
                         'out' => $entry->pm_time_out ? date('h:i A', strtotime($entry->pm_time_out)) : '',
                         'ot_in' => $entry->ot_in ?? '',
                         'ot_out' => $entry->ot_out ?? '',
-                        'low' => $attendance_type ? $attendance_type->default_rendered_hours : $entry->rendered_hours,
+                        'low' => $entry->rendered_hours,
                         'ot' => $entry->excess_minutes ? date('H:i', strtotime($entry->excess_minutes)) : '',
                         'ut' => $entry->undertime_minutes ? date('H:i', strtotime($entry->undertime_minutes)) : '',
                         'lt' => $entry->late_hours ? date('H:i', strtotime($entry->late_hours)) : '',
@@ -157,15 +158,21 @@ class PDFController extends Controller
                 ->where('start_date', '<=', $dateKey)
                 ->where('end_date', '>=', $dateKey)
                 ->first();
-            
-            if ($approvedAttendance) {
+
+            // Check if the date is a holiday
+            $holiday = DB::table('holidays')->where('date', $dateKey)->first();
+
+            if ($holiday) {
+                // Update the status to "Holiday" and set the holiday name
+                $dates[$dateKey]['status'] = 'Holiday';
+                $dates[$dateKey]['holidays'] = $holiday->name;
+            } elseif ($approvedAttendance) {
                 // Get the attendance type
                 $attendanceType = AttendanceType::where('id', $approvedAttendance->attendance_type)->first();
-                
+
                 if ($attendanceType) {
                     // Update the temp date with attendance type information
                     $dates[$dateKey]['status'] = $attendanceType->type;
-                    $dates[$dateKey]['low'] = $attendanceType->default_rendered_hours;
                 }
             }
         }
@@ -319,31 +326,31 @@ class PDFController extends Controller
                 $filename = $validated['attachment']['filename'];
                 
                 // Upload to S3
-                $s3Client = new S3Client([
-                    'version' => 'latest',
-                    'region'  => env('AWS_DEFAULT_REGION'),
-                    'credentials' => [
-                        'key'    => env('AWS_ACCESS_KEY_ID'),
-                        'secret' => env('AWS_SECRET_ACCESS_KEY')
-                    ]
-                ]);
+                // $s3Client = new S3Client([
+                //     'version' => 'latest',
+                //     'region'  => env('AWS_DEFAULT_REGION'),
+                //     'credentials' => [
+                //         'key'    => env('AWS_ACCESS_KEY_ID'),
+                //         'secret' => env('AWS_SECRET_ACCESS_KEY')
+                //     ]
+                // ]);
 
                 // Upload the file to S3
-                $s3Client->putObject([
-                    'Bucket' => env('AWS_BUCKET'),
-                    'Key'    => "dtr/{$filename}",
-                    'Body'   => fopen($validated['attachment']['file_path'], 'rb'),
-                    'ACL'    => 'private'
-                ]);
+                // $s3Client->putObject([
+                //     'Bucket' => env('AWS_BUCKET'),
+                //     'Key'    => "dtr/{$filename}",
+                //     'Body'   => fopen($validated['attachment']['file_path'], 'rb'),
+                //     'ACL'    => 'private'
+                // ]);
 
-                // Generate a signed URL for downloading
-                $cmd = $s3Client->getCommand('GetObject', [
-                    'Bucket' => env('AWS_BUCKET'),
-                    'Key'    => "dtr/{$filename}"
-                ]);
+                // // Generate a signed URL for downloading
+                // $cmd = $s3Client->getCommand('GetObject', [
+                //     'Bucket' => env('AWS_BUCKET'),
+                //     'Key'    => "dtr/{$filename}"
+                // ]);
 
-                $request = $s3Client->createPresignedRequest($cmd, '+120 minutes');
-                $downloadUrl = (string) $request->getUri();
+                // $request = $s3Client->createPresignedRequest($cmd, '+120 minutes');
+                // $downloadUrl = (string) $request->getUri();
 
                 // Create the S3 path
                 $attachmentPath = "dtr/{$filename}";
@@ -369,19 +376,17 @@ class PDFController extends Controller
             return response()->json(['error' => 'File path not provided or file does not exist'], 400);
         }
 
-        
-        $requestDTR = RequestDTR::create(
-            [
-                'user_id' => $validated['user_id'],
-                'approver_id' => $validated['approver_id'],
-                'attachment' => $attachmentPath,
-                'status' => $validated['status'],
-                'subject' => $validated['subject'],
-            ]
+        $requestDTR = array(
+            'user_id' => $validated['user_id'],
+            'approver_id' => $validated['approver_id'],
+            'attachment' => $attachmentPath,
+            'status' => $validated['status'],
+            'subject' => $validated['subject'],
         );
+
         return response()->json([
             'message' => 'DTR submitted successfully',
-            'requestDTR' => $requestDTR
+            'data' => $requestDTR
         ]);
     }
 

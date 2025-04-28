@@ -48,7 +48,6 @@ Route::middleware('auth:api')->group(function () {
 
 Route::get('download-attachment/{filename}', [ApprovedAttendanceController::class, 'download'])->name('attachment.download');
 
-
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
 

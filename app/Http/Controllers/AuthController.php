@@ -58,21 +58,41 @@ class AuthController extends Controller
             $employee = $userData['employee'];
             // Create or update user in local database
 
-            $user = User::updateOrCreate(
-                ['email' => $userData['email']],
-                [
-                    'user_id' => $employee['id'],
-                    'id_number' => $employee['personal_info']['id_number'],
-                    'full_name' => $employee['full_name'] ?? '',
-                    'password' => $request->password,
-                    'position' => $employee['position']['name'] ?? null,
-                    'employment_status' => $employee['employment_status'] ?? null,
-                    'official_station' => $employee['official_station']['location'] ?? null,
-                    'signature_url' => $employee['signature_url'] ? str_replace('https://empowerex.s3.ap-southeast-1.amazonaws.com/', '', strtok($employee['signature_url'], '?')) : null,
-                    'empowerex_token' => $data['access_token'],
-                    'empowerex_refresh_token' => $data['refresh_token']
-                ]
-            );            
+            // Check if the user already exists in the local database
+            $existingUser = User::where('user_id', $userData['id'])->first();
+
+            if ($existingUser) {
+                // If the user exists, update their information
+                $user = $existingUser;
+                $user->id_number = $employee['personal_info']['id_number'];
+                $user->full_name = $employee['full_name'] ?? '';
+                $user->email = $userData['email'];
+                $user->password = $request->password;
+                $user->position = $employee['position']['name'] ?? null;
+                $user->employment_status = $employee['employment_status'] ?? null;
+                $user->official_station = $employee['official_station']['location'] ?? null;
+                $user->signature_url = $employee['signature_url'] ? str_replace('https://empowerex.s3.ap-southeast-1.amazonaws.com/', '', strtok($employee['signature_url'], '?')) : null;
+                $user->empowerex_token = $data['access_token'];
+                $user->empowerex_refresh_token = $data['refresh_token'];
+                $user->roles = json_encode($userData['roles'] ?? []); // Save roles as JSON
+                $user->save();
+            } else {
+                // If the user does not exist, create a new user
+                $user = new User();
+                $user->user_id = $userData['id'];
+                $user->id_number = $employee['personal_info']['id_number'];
+                $user->full_name = $employee['full_name'] ?? '';
+                $user->email = $userData['email'];
+                $user->password = $request->password;
+                $user->position = $employee['position']['name'] ?? null;
+                $user->employment_status = $employee['employment_status'] ?? null;
+                $user->official_station = $employee['official_station']['location'] ?? null;
+                $user->signature_url = $employee['signature_url'] ? str_replace('https://empowerex.s3.ap-southeast-1.amazonaws.com/', '', strtok($employee['signature_url'], '?')) : null;
+                $user->empowerex_token = $data['access_token'];
+                $user->empowerex_refresh_token = $data['refresh_token'];
+                $user->roles = json_encode($userData['roles'] ?? []); // Save roles as JSON
+                $user->save();
+            }
 
             // Create token for the user
             $token = $user->createToken('auth-token')->accessToken;
@@ -116,5 +136,5 @@ class AuthController extends Controller
     {
         $user = Auth::user();
         return response()->json($user);
-    }
+    } 
 }

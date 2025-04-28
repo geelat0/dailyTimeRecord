@@ -102,51 +102,6 @@ class TimeSheetDataTable extends DataTable
             }
         })
 
-        // ->addColumn('attachment', function ($row) {
-        //     $attachments = json_decode($row->files, true);
-        //     if (!is_array($attachments)) {
-        //         return '';
-        //     }
-            
-        //     return implode(', ', array_map(function($file) {
-        //         if (isset($file['file'])) {
-        //             $filename = substr($file['file'], 0, -10);
-        //             $originalName = $file['file_name'];
-        //             $downloadUrl = route('attachment.download', ['filename' => $filename]);
-        //             $fileExtension = pathinfo($originalName, PATHINFO_EXTENSION);
-                    
-        //             if (in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'])) {
-        //                 return '<a href="' . $downloadUrl . '" class="underline italic font-semibold" target="_blank">' . ($file['file_name'] ?? 'View Image') . '</a>';
-        //             } else {
-        //                 return '<a href="' . $downloadUrl . '" class="underline italic font-semibold">' . ($file['file_name'] ?? 'Download') . '</a>';
-        //             }
-        //         }
-        //         return '';
-        //     }, $attachments));
-        // })
-
-
-        // ->addColumn('attachment', function ($row) {
-        //     $attachments = json_decode($row->files, true);
-        //     if (!is_array($attachments)) {
-        //         return '';
-        //     }
-        
-        //     return json_encode(array_map(function ($file) {
-        //         $filename = substr($file['file'], 0, -10);
-        //         $originalName = $file['file_name'];
-        //         $downloadUrl = route('attachment.download', ['filename' => $filename]);
-        //         $fileExtension = pathinfo($originalName, PATHINFO_EXTENSION);
-        
-        //         return [
-        //             'file_url' => $downloadUrl,
-        //             'file_name' => $originalName,
-        //             'file_type' => $fileExtension,
-        //             'is_image' => in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg']),
-        //         ];
-        //     }, $attachments));
-        // })
-
         ->addColumn('attachment', function ($row) {
             $attachments = json_decode($row->files, true);
             if (!is_array($attachments)) {
@@ -218,18 +173,33 @@ class TimeSheetDataTable extends DataTable
         }, $dates));
 
         $query = $model->newQuery()
-            ->select('time_entries.*', 'temp_dates.day as temp_day', 'temp_dates.date as temp_date', 'approved_attendance.files', 'approved_attendance.attendance_type')
+            ->select(
+                'temp_dates.date as temp_date',
+                'temp_dates.day as temp_day',
+                DB::raw('MAX(time_entries.am_time_in) as am_time_in'),
+                DB::raw('MAX(time_entries.am_time_out) as am_time_out'),
+                DB::raw('MAX(time_entries.pm_time_in) as pm_time_in'),
+                DB::raw('MAX(time_entries.pm_time_out) as pm_time_out'),
+                DB::raw('MAX(time_entries.rendered_hours) as rendered_hours'),
+                DB::raw('MAX(time_entries.excess_minutes) as excess_minutes'),
+                DB::raw('MAX(time_entries.late_hours) as late_hours'),
+                DB::raw('MAX(time_entries.undertime_minutes) as undertime_minutes'),
+                DB::raw('MAX(time_entries.remarks) as remarks'),
+                DB::raw('MAX(approved_attendance.files) as files'),
+                DB::raw('MAX(approved_attendance.attendance_type) as attendance_type')
+            )
             ->from(DB::raw("(SELECT $tempDatesQuery) as temp_dates"))
-            ->leftJoin('time_entries', function ($join) use($user_id) {
+            ->leftJoin('time_entries', function ($join) use ($user_id) {
                 $join->on(DB::raw('DATE(time_entries.date)'), '=', 'temp_dates.date')
                      ->where('time_entries.user_id', $user_id);
             })
-            ->leftJoin('approved_attendance', function ($join) use($user_id) {
+            ->leftJoin('approved_attendance', function ($join) use ($user_id) {
                 $join->on(DB::raw('DATE_FORMAT(temp_dates.date, "%Y-%m-%d")'), '>=', 'approved_attendance.start_date')
                      ->on(DB::raw('DATE_FORMAT(temp_dates.date, "%Y-%m-%d")'), '<=', 'approved_attendance.end_date')
                      ->where('approved_attendance.user_id', $user_id);
             })
             ->whereBetween('temp_dates.date', [$startDate, $endDate])
+            ->groupBy('temp_dates.date', 'temp_dates.day') // Group by date and day
             ->orderBy('temp_dates.date', 'asc');
 
         return $query;

@@ -29,7 +29,7 @@ import { useMediaQuery } from '@vueuse/core'
 const timeEntries = ref([]);
 const selectedEntry = ref(null);
 const currentPage = ref(1);
-const itemsPerPage = ref(31);
+const itemsPerPage = ref(30);
 const totalItems = ref(0);
 const isLoading = ref(false)
 const isMobile = useMediaQuery('(max-width: 768px)')
@@ -40,10 +40,12 @@ const fetchTimeEntries = async (dates = {}) => {
   isLoading.value = true; // Set loading to true before fetching
   await new Promise(resolve => setTimeout(resolve, 1000)); // Load for 3 seconds
     try {
+      const now = new Date();
       const filterDates = Object.keys(dates).length ? dates : {
-        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-        endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0]
+        startDate: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0], // First day of the current month
+        endDate: new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0] // Last day of the current month
       };
+      console.log('Filter Dates:', filterDates);
       const response = await axios.get(`/api/time-entries/list/${filterDates.startDate}/${filterDates.endDate}`);
 
         timeEntries.value = response.data.data;

@@ -324,7 +324,7 @@
         <p class="certify">I certify that the entries in this record were made by myself daily at the time of arrival and departure from the office and are true and correct.</p>
         <div>
             @if($signature)
-                <img src="{{ $signature }}" alt="Employee Signature" style="max-width: 190px; max-height: 70px; position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); mix-blend-mode: multiply; -webkit-filter: grayscale(100%); filter: grayscale(100%);">
+                <img src="{{ $signature ? $signature : '' }}" alt="Employee Signature" style="max-width: 190px; max-height: 70px; position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); mix-blend-mode: multiply; -webkit-filter: grayscale(100%); filter: grayscale(100%);">
             @endif
             Employee's Signature
         </div>

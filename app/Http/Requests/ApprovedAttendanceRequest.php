@@ -26,7 +26,7 @@ class ApprovedAttendanceRequest extends FormRequest
             'start_date.*' => 'required',
             'end_date.*' => 'required',
             'attendance_type' => 'required|integer|exists:attendance_type,id',
-            'file' => 'required|max:25600',
+            'file.*' => 'required|file|mimes:jpeg,jpg,png,pdf|max:25600',
             'file_path' => 'nullable',
             'file_name' => 'nullable',
             'remarks' => 'required|string',

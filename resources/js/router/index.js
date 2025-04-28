@@ -92,7 +92,7 @@ const routes = [
       id: 6,
       label: 'Request Status',
       group: 'Request Status',
-      hidden: false
+      hidden: true
     }
   },
   {

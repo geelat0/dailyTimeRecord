@@ -5,6 +5,7 @@ namespace App\DataTables;
 use App\Models\RequestDTR;
 use App\Models\RequestStatus;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
 use Yajra\DataTables\Html\Button;
@@ -34,7 +35,21 @@ class RequestStatusDataTable extends DataTable
             })
 
             ->addColumn('approver_id', function ($row) {
-                return $row->approver_id ?? '';
+                $client = new \GuzzleHttp\Client();
+
+                $token = Auth::user()->empowerex_token;
+
+                $response = $client->request('GET', 'https://api.extest.link/api/v1/employees/' . $row->approver_id, [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $token,
+                        'Accept' => 'application/json'
+                    ],
+                ]);
+
+                $data = json_decode($response->getBody(), true);
+                $approverName = $data['data']['full_name'];
+
+                return $approverName ?? '';
             })
 
             ->addColumn('attachment', function ($row) {

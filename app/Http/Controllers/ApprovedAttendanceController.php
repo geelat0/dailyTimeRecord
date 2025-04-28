@@ -44,17 +44,38 @@ class ApprovedAttendanceController extends Controller
      */
     public function store(ApprovedAttendanceRequest $request)
     { 
-        
-        try{
+        try {
             $validated = $request->validated();
             $startDates = $request->start_date;
             $endDates = $request->end_date; 
-            $files = $request->file('file');
+            $files = $request->file('file');   
             $attendances = [];
 
+            // Upload files to S3
+            $flattenedFiles = [];
+            foreach ($files as $fileGroup) {
+                if (is_array($fileGroup)) {
+                    $flattenedFiles = array_merge($flattenedFiles, $fileGroup);
+                } else {
+                    $flattenedFiles[] = $fileGroup;
+                }
+            }
+
+            // Store each file in S3 and prepare the file details
+            $fileDetails = [];
+            if ($flattenedFiles) {
+                foreach ($flattenedFiles as $file) {
+                    $path = $file->store('uploads', 's3');
+                    $fileName = basename($path);
+                    $fileDetails[] = [
+                        'file_name' => $file->getClientOriginalName(),
+                        'file' => str_replace('.pdf', '', $fileName) . Str::random(10),
+                    ];
+                }
+            }
+            
             foreach ($startDates as $index => $startDate) {
                 $endDate = $endDates[$index];
-
                 // Process the dates
                 $startDateTime = \Carbon\Carbon::parse($startDate);
                 $endDateTime = \Carbon\Carbon::parse($endDate);
@@ -66,38 +87,15 @@ class ApprovedAttendanceController extends Controller
                     $startDateTime->addDay();
                 }
 
-                $fileDetails = [];
-                if ($files) {
-                    foreach ($dateRange as $date) {
-                        foreach ($files as $file) {
-                            $path = $file->store('uploads', 's3');
-                            $fileName = basename($path);
-                            $fileDetails[] = [
-                                'file_name' => $file->getClientOriginalName(),
-                                'file' => str_replace('.pdf', '', $fileName) . Str::random(10),
-                                'date' => $date
-                            ];
-                        }
-                    }
-                }
-
                 // Group files by date
                 $groupedFiles = [];
-                foreach ($fileDetails as $fileDetail) {
-                    $date = $fileDetail['date'];
-                    if (!isset($groupedFiles[$date])) {
-                        $groupedFiles[$date] = [];
-                    }
-                    $groupedFiles[$date][] = [
-                        'file_name' => $fileDetail['file_name'],
-                        'file' => $fileDetail['file']
-                    ];
-                }
-
-                // Ensure each date in the range has an entry
                 foreach ($dateRange as $date) {
-                    if (!isset($groupedFiles[$date])) {
-                        $groupedFiles[$date] = [];
+                    $groupedFiles[$date] = [];
+                    foreach ($fileDetails as $fileDetail) {
+                        $groupedFiles[$date][] = [
+                            'file_name' => $fileDetail['file_name'],
+                            'file' => $fileDetail['file']
+                        ];
                     }
                 }
 
@@ -112,15 +110,15 @@ class ApprovedAttendanceController extends Controller
 
                 // Check if there is an existing attendance with overlapping dates
                 $existingAttendance = ApproveAttendance::where('user_id', $validated['user_id'])
-                ->where(function ($query) use ($startDate, $endDate) {
-                    $query->whereBetween('start_date', [$startDate, $endDate])
-                        ->orWhereBetween('end_date', [$startDate, $endDate])
-                        ->orWhere(function ($query) use ($startDate, $endDate) {
-                            $query->where('start_date', '<=', $startDate)
+                    ->where(function ($query) use ($startDate, $endDate) {
+                        $query->whereBetween('start_date', [$startDate, $endDate])
+                            ->orWhereBetween('end_date', [$startDate, $endDate])
+                            ->orWhere(function ($query) use ($startDate, $endDate) {
+                                $query->where('start_date', '<=', $startDate)
                                     ->where('end_date', '>=', $endDate);
-                        });
-                })
-                ->first();
+                            });
+                    })
+                    ->first();
 
                 if ($existingAttendance) {
                     // Get existing files and merge with new files
@@ -152,55 +150,43 @@ class ApprovedAttendanceController extends Controller
                             'files' => $files
                         ];
                     }
-                    
+
                     $existingAttendance->files = json_encode($finalFileDetails);
                     $existingAttendance->attendance_type = $validated['attendance_type'];
                     $existingAttendance->remarks = $validated['remarks'];
                     $existingAttendance->save();
+
                     $attendance = $existingAttendance;
-                    
                 } else {
                     $attendance = new ApproveAttendance();
                     $attendance->user_id = $validated['user_id'];
                     $attendance->start_date = $startDate;
                     $attendance->end_date = $endDate;
                     $attendance->attendance_type = $validated['attendance_type'];
-                    $attendance->files = json_encode($finalFileDetails); // Store files as JSON
+                    $attendance->files = json_encode($finalFileDetails);
                     $attendance->remarks = $validated['remarks'];
-
+                    $attendance->save();
                 }
-                $attendance->save();
-
-                $attendance_type = AttendanceType::where('id', $validated['attendance_type'])->first();
 
                 // Update time entries with the approved attendance ID
-                TimeEntry::whereBetween('date', [$startDate, $endDates[$index]])
-                ->where('user_id', $validated['user_id'])
-                ->update(['approved_attendance' => $attendance->id, 'rendered_hours' => $attendance_type->default_rendered_hours]);
+                TimeEntry::whereBetween('date', [$startDate, $endDate])
+                    ->where('user_id', $validated['user_id'])
+                    ->update(['approved_attendance' => $attendance->id]);
     
                 $attendances[] = $attendance;
-
             }
     
-            return response()->json(
-                [
-                    'message' => 'Approved attendance or absence saved successfully',
-                    'data' => $attendances
-                ],
-                200
-            );
+            return response()->json([
+                'message' => 'Approved attendance or absence saved successfully',
+                'data' => $attendances
+            ], 200);
 
-        }catch(\Exception $e){
-            return response()->json(
-                [
-                    'message' => 'An error occurred while approving attendance.',
-                    'error' => $e->getMessage()
-                ],
-                500
-            );
+        } catch(\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while approving attendance.',
+                'error' => $e->getMessage()
+            ], 500);
         }
-       
-
     }
 
     /**

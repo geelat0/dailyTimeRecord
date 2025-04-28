@@ -342,7 +342,6 @@ class TimeSheetController extends Controller
 
         if($approvedAttendance){
             $timeEntry->approved_attendance = $approvedAttendance->id;
-            $timeEntry->rendered_hours = $approvedAttendance->default_rendered_hours;
             $timeEntry->save();
         }
 
